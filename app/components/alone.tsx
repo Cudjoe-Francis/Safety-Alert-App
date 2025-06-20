@@ -1,5 +1,4 @@
 import {
-  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -9,23 +8,15 @@ import {
 import React, { useState } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Entypo from "@expo/vector-icons/Entypo";
-import { push } from "expo-router/build/global-state/routing";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import UserDetailsModal from "../components/user-details";
+import { router } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 // delete this import when done with the emergency button
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Link } from "expo-router";
 
-const Home = () => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+const Alone = () => {
   const [showPopup, setShowPopup] = useState(false);
-
-  const handleOpenModal = () => {
-    setShowPopup(false);
-    setIsModalVisible(true);
-  };
 
   return (
     <SafeAreaProvider>
@@ -33,37 +24,10 @@ const Home = () => {
         <Pressable onPress={() => setShowPopup(false)} style={{ flex: 1 }}>
           {/* Top view */}
           <View style={styles.topContainer}>
-            {/* see profile and find help */}
-            <View style={styles.profile_location_help_ctn}>
-              {/* see profile */}
-              <View
-                style={{
-                  alignItems: "center",
-                  flexDirection: "row",
-                  columnGap: 6,
-                }}
-              >
-                {/* profile icon here */}
-
-                <FontAwesome5 name="user-circle" size={28} color="#FF5330" />
-
-                <View style={{ alignItems: "center" }}>
-                  <Text style={styles.profile_name}>Hello Deep</Text>
-                  <TouchableOpacity onPress={handleOpenModal}>
-                    <Text style={styles.see_profile}>See Profile</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Modal Screen */}
-              <Modal
-                visible={isModalVisible}
-                onRequestClose={() => setIsModalVisible(false)}
-                animationType="slide"
-                presentationStyle="pageSheet"
-              >
-                <UserDetailsModal closeModal={() => setIsModalVisible(false)} />
-              </Modal>
+            <View style={styles.back_icon_ctn}>
+              <Pressable onPress={() => router.back()} style={styles.back_icon}>
+                <Entypo name="chevron-left" size={28} color="#000" />
+              </Pressable>
 
               {/* find help */}
               <View style={styles.find_help_ctn}>
@@ -107,12 +71,12 @@ const Home = () => {
 
             {/* emergency and help */}
             <View style={styles.emergency_help_ctn}>
-              <Text style={styles.emergency_help_text}>
-                Emergency help needed?
-              </Text>
+              <Text style={styles.emergency_help_text}>Alone Mode</Text>
 
               <Text style={styles.just_press_btn_text}>
-                Just press the button
+                After the timer starts, if you doesn`t respond (Press the button
+                below) in 15 mins. The app will inform your peers that you`re in
+                danger
               </Text>
             </View>
           </View>
@@ -122,7 +86,7 @@ const Home = () => {
             {/* Middle emergency button here - change the text to btn */}
             <TouchableOpacity
               style={styles.emergency_btn}
-              // onPress={() => alert("Emergency button pressed!")}
+              // onPress={() => alert("Alone button pressed!")}
             >
               <FontAwesome name="dot-circle-o" size={220} color="red" />
             </TouchableOpacity>
@@ -130,17 +94,12 @@ const Home = () => {
 
           {/* Bottom button  view */}
           <View style={styles.bottomContainer}>
-            <Text style={styles.unsafe_text}>Feeling Unsafe?</Text>
             <TouchableOpacity
               style={styles.alone_btn}
-              onPress={() => push("/components/alone")}
+              // onPress={() => alert("Stop button pressed!")}
             >
-              <Text style={styles.alone_btn_text}>I`m Alone</Text>
+              <Text style={styles.alone_btn_text}>Stop</Text>
             </TouchableOpacity>
-            <Link href="/components/emergency-contacts">
-              Go To Emergency contacts
-            </Link>
-            <Link href="/components/record-audio">Go To Record audio</Link>
           </View>
         </Pressable>
       </SafeAreaView>
@@ -148,9 +107,10 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Alone;
 
 const styles = StyleSheet.create({
+  // popup styling
   absoluteFill: {
     position: "absolute",
     top: 40,
@@ -182,6 +142,7 @@ const styles = StyleSheet.create({
   popupText: {
     fontSize: 17,
   },
+  // popup styling ends here
 
   mainContainer: {
     flex: 1,
@@ -194,22 +155,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  profile_location_help_ctn: {
+  back_icon_ctn: {
+    paddingHorizontal: 10,
+    marginTop: 10,
     flexDirection: "row",
     justifyContent: "space-between",
   },
 
-  profile_name: {
-    color: "#636363",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-
-  see_profile: {
-    // color: "#FF5330",
-    color: "red",
-    fontSize: 16,
-    fontWeight: "500",
+  back_icon: {
+    width: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 30,
+    height: 40,
   },
 
   find_help_ctn: {
@@ -242,6 +200,7 @@ const styles = StyleSheet.create({
     color: "#636363",
     fontSize: 15,
     textAlign: "center",
+    width: 280,
   },
 
   middleContainer: {
@@ -258,21 +217,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingBottom: 50,
-  },
-
-  unsafe_text: {
-    fontSize: 18,
-    fontWeight: "700",
   },
 
   alone_btn: {
     paddingVertical: 14,
-    paddingHorizontal: 42,
+    paddingHorizontal: 60,
     // backgroundColor: "#FF5330",
     backgroundColor: "red",
     borderRadius: 12,
-    marginTop: 12,
   },
 
   alone_btn_text: {

@@ -15,7 +15,7 @@ const googleLogo = require("..//../assets/images/google.png");
 const instagramLogo = require("..//../assets/images/instagram.jpeg");
 const facebookLogo = require("..//../assets/images/facebook.png");
 
-const backgroundImage = require("..//../assets/images/flashBackground_2.jpg");
+const backgroundImage = require("..//../assets/images/flashBackground_4.jpg");
 
 const FlashScreen = () => {
   return (
@@ -72,7 +72,6 @@ const styles = StyleSheet.create({
   },
 
   container: {
-    // backgroundColor: "#FF5330",
     flex: 1,
   },
 
@@ -114,8 +113,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 340,
     borderRadius: 20,
-    // backgroundColor: "#FF5330",
-    backgroundColor: "red",
+    backgroundColor: "#fe1e16",
     paddingVertical: 10,
   },
 

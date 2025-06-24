@@ -1,5 +1,4 @@
 import {
-  Button,
   Pressable,
   StyleSheet,
   Text,
@@ -9,16 +8,13 @@ import {
 } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { push, replace } from "expo-router/build/global-state/routing";
+import { replace } from "expo-router/build/global-state/routing";
 
 const SignUp = () => {
-  const router = useRouter();
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      {/* <Button title='Back' onPress={() => router.back()} /> */}
 
       <View style={styles.createAcc}>
         <Text style={styles.createAccText}>Hello Sign In!</Text>
@@ -61,13 +57,11 @@ export default SignUp;
 
 const styles = StyleSheet.create({
   mainContainer: {
-    // backgroundColor: "#FF5330",
-    backgroundColor: "red",
+    backgroundColor: "#ff4330",
     flex: 1,
   },
 
   createAcc: {
-    // backgroundColor: "#FF5330",
     paddingBottom: 80,
     paddingTop: 16,
     paddingHorizontal: 20,
@@ -87,7 +81,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 26,
     paddingHorizontal: 20,
     paddingVertical: 40,
-    marginBottom: -30,
+    marginBottom: -50,
   },
 
   welcomeText: {
@@ -98,15 +92,15 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    // color: "#FF5330",
-    color: "red",
+    color: "#ff4330",
   },
 
   input: {
     borderBottomWidth: 1,
-    marginBottom: 24,
-    fontSize: 18,
-    borderColor: "grey",
+    marginBottom: 28,
+    fontSize: 20,
+    borderColor: "#949494",
+    paddingTop: 10,
   },
 
   forgotPasswordText: {
@@ -120,8 +114,7 @@ const styles = StyleSheet.create({
   },
 
   signUpBtn: {
-    // backgroundColor: "#FF5330",
-    backgroundColor: "red",
+    backgroundColor: "#ff4330",
     borderRadius: 20,
     marginTop: 120,
     paddingVertical: 10,
@@ -138,7 +131,6 @@ const styles = StyleSheet.create({
   },
 
   signInText: {
-    // color: "#FF5330",
-    color: "red",
+    color: "#ff4330",
   },
 });

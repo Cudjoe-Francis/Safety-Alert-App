@@ -26,7 +26,7 @@ const Alone = () => {
           <View style={styles.topContainer}>
             <View style={styles.back_icon_ctn}>
               <Pressable onPress={() => router.back()} style={styles.back_icon}>
-                <Entypo name="chevron-left" size={28} color="#000" />
+                <Entypo name="chevron-left" size={28} color="#ff4330" />
               </Pressable>
 
               {/* find help */}
@@ -38,7 +38,7 @@ const Alone = () => {
                   <View style={{ width: 70 }}>
                     <Text style={styles.find_help_text}>Find Help nearby</Text>
                   </View>
-                  <Entypo name="location-pin" size={32} color="#FF5330" />
+                  <Entypo name="location-pin" size={32} color="#ff4330" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -52,7 +52,7 @@ const Alone = () => {
                       <MaterialIcons
                         name="security"
                         size={24}
-                        color="#FF5330"
+                        color="#ff4330"
                       />
                       <Text style={styles.popupText}>Police Station</Text>
                     </TouchableOpacity>
@@ -60,7 +60,7 @@ const Alone = () => {
                       <FontAwesome5
                         name="hospital-alt"
                         size={20}
-                        color="#FF5330"
+                        color="#ff4330"
                       />
                       <Text style={styles.popupText}>Hospitals</Text>
                     </TouchableOpacity>
@@ -88,7 +88,7 @@ const Alone = () => {
               style={styles.emergency_btn}
               // onPress={() => alert("Alone button pressed!")}
             >
-              <FontAwesome name="dot-circle-o" size={220} color="red" />
+              <FontAwesome name="dot-circle-o" size={220} color="#ff4330" />
             </TouchableOpacity>
           </View>
 
@@ -98,7 +98,7 @@ const Alone = () => {
               style={styles.alone_btn}
               // onPress={() => alert("Stop button pressed!")}
             >
-              <Text style={styles.alone_btn_text}>Stop</Text>
+              <Text style={styles.alone_btn_text}>Start</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -176,8 +176,7 @@ const styles = StyleSheet.create({
   },
 
   find_help_text: {
-    // color: "#FF5330",
-    color: "red",
+    color: "#ff4330",
     fontWeight: "500",
     fontSize: 16,
     textAlign: "center",
@@ -222,8 +221,7 @@ const styles = StyleSheet.create({
   alone_btn: {
     paddingVertical: 14,
     paddingHorizontal: 60,
-    // backgroundColor: "#FF5330",
-    backgroundColor: "red",
+    backgroundColor: "#ff4330",
     borderRadius: 12,
   },
 

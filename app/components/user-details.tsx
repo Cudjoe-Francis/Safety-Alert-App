@@ -10,10 +10,10 @@ const UserDetailsModal = ({ closeModal }: any) => {
     <SafeAreaView>
       <View style={styles.topContainer}>
         <Pressable onPress={closeModal}>
-          <Entypo name="chevron-down" size={28} color="#000" />
+          <Entypo name="chevron-down" size={30} color="#ff4330" />
         </Pressable>
         <Pressable>
-          <Entypo name="edit" size={18} color="#000" />
+          <Entypo name="edit" size={20} color="#ff4330" />
         </Pressable>
       </View>
 

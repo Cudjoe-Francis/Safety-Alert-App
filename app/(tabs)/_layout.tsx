@@ -10,14 +10,14 @@ const TabsLayout = () => {
       <StatusBar style="dark" />
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: "#FF5330",
+          tabBarActiveTintColor: "#ff4330",
           tabBarInactiveTintColor: "#000",
           tabBarShowLabel: false,
           headerShown: false,
           tabBarStyle: {
             paddingTop: 7,
-            borderTopLeftRadius: 30,
-            borderTopRightRadius: 30,
+            // borderTopLeftRadius: 30,
+            // borderTopRightRadius: 30,
             borderWidth: 1,
             borderColor: "#dbdbdb",
           },

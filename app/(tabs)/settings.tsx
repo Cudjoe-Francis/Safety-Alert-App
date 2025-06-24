@@ -10,18 +10,20 @@ import React, { useState } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 import { replace } from "expo-router/build/global-state/routing";
-
+import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 
 const Settings = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 0}}>
+    <ScrollView contentContainerStyle={{ paddingBottom: 0 }}>
       {/* General settings */}
       {/* <Text style={styles.heading}>General</Text> */}
 
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => router.push("/settings-components/location-services")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/location-services")}
+        >
           <View style={styles.single_settings_ctn}>
             {/* <Entypo name="location-pin" size={24} color="black" /> */}
             <Text style={styles.single_settings}>Location Services</Text>
@@ -29,21 +31,29 @@ const Settings = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/security-agencies")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/security-agencies")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Select Security Agencies</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/alert-trigger-method")}>
+        <TouchableOpacity
+          onPress={() =>
+            router.push("/settings-components/alert-trigger-method")
+          }
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Alert Trigger Method</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/countdown-timer")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/countdown-timer")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Countdown Timer</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
@@ -61,7 +71,9 @@ const Settings = () => {
           />
         </View>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/enable-preferences")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/enable-preferences")}
+        >
           <View
             style={[
               styles.single_settings_ctn,
@@ -85,21 +97,27 @@ const Settings = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/faqs")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/faqs")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>FAQs</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/report-problem")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/report-problem")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Report a Problem</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/contact-us")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/contact-us")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Contact Us</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
@@ -112,35 +130,45 @@ const Settings = () => {
       {/* <Text style={styles.heading}>About</Text> */}
 
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => router.push("/settings-components/privacy-policy")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/privacy-policy")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Privacy Policy</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/terms-conditions")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/terms-conditions")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Terms & Conditions</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/license")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/license")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>License</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/developer-info")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/developer-info")}
+        >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>Developer Info</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/settings-components/version")}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/version")}
+        >
           <View
             style={[
               styles.single_settings_ctn,
@@ -153,8 +181,11 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={() => replace('/signin')} style={styles.logoutButton}>
-            <Entypo name="log-out" size={20} color="#fff" />
+      <TouchableOpacity
+        onPress={() => replace("/signin")}
+        style={styles.logoutButton}
+      >
+        <SimpleLineIcons name="logout" size={18} color="#fff" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -175,18 +206,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginHorizontal: 20,
     borderRadius: 10,
-    marginTop: 24
+    marginTop: 24,
   },
 
   single_settings_ctn: {
-    // backgroundColor: "lightgreen", //
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+    // borderBottomWidth: 1,
+    // borderColor: "#eee",
   },
 
   dark_mode_ctn: {
@@ -208,18 +238,18 @@ const styles = StyleSheet.create({
   },
 
   logoutButton: {
-    backgroundColor: 'red',
+    backgroundColor: "#ff4330",
     marginTop: 30,
     paddingVertical: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     columnGap: 10,
   },
 
   logoutText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 18,
   },
 });

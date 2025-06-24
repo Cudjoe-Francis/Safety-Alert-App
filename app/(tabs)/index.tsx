@@ -13,10 +13,10 @@ import { push } from "expo-router/build/global-state/routing";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import UserDetailsModal from "../components/user-details";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { StatusBar } from "expo-status-bar";
 
 // delete this import when done with the emergency button
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Link } from "expo-router";
 
 const Home = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -45,7 +45,7 @@ const Home = () => {
               >
                 {/* profile icon here */}
 
-                <FontAwesome5 name="user-circle" size={28} color="#FF5330" />
+                <FontAwesome5 name="user-circle" size={28} color="#ff4330" />
 
                 <View style={{ alignItems: "center" }}>
                   <Text style={styles.profile_name}>Hello Deep</Text>
@@ -74,7 +74,7 @@ const Home = () => {
                   <View style={{ width: 70 }}>
                     <Text style={styles.find_help_text}>Find Help nearby</Text>
                   </View>
-                  <Entypo name="location-pin" size={32} color="#FF5330" />
+                  <Entypo name="location-pin" size={32} color="#ff4330" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -88,7 +88,7 @@ const Home = () => {
                       <MaterialIcons
                         name="security"
                         size={24}
-                        color="#FF5330"
+                        color="#ff4330"
                       />
                       <Text style={styles.popupText}>Police Station</Text>
                     </TouchableOpacity>
@@ -96,7 +96,7 @@ const Home = () => {
                       <FontAwesome5
                         name="hospital-alt"
                         size={20}
-                        color="#FF5330"
+                        color="#ff4330"
                       />
                       <Text style={styles.popupText}>Hospitals</Text>
                     </TouchableOpacity>
@@ -124,7 +124,7 @@ const Home = () => {
               style={styles.emergency_btn}
               // onPress={() => alert("Emergency button pressed!")}
             >
-              <FontAwesome name="dot-circle-o" size={220} color="red" />
+              <FontAwesome name="dot-circle-o" size={220} color="#ff4330" />
             </TouchableOpacity>
           </View>
 
@@ -137,12 +137,10 @@ const Home = () => {
             >
               <Text style={styles.alone_btn_text}>I`m Alone</Text>
             </TouchableOpacity>
-            <Link href="/components/emergency-contacts">
-              Go To Emergency contacts
-            </Link>
-            <Link href="/components/record-audio">Go To Record audio</Link>
           </View>
         </Pressable>
+
+        <StatusBar style="dark" />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -206,8 +204,7 @@ const styles = StyleSheet.create({
   },
 
   see_profile: {
-    // color: "#FF5330",
-    color: "red",
+    color: "#ff4330",
     fontSize: 16,
     fontWeight: "500",
   },
@@ -218,8 +215,7 @@ const styles = StyleSheet.create({
   },
 
   find_help_text: {
-    // color: "#FF5330",
-    color: "red",
+    color: "#ff4330",
     fontWeight: "500",
     fontSize: 16,
     textAlign: "center",
@@ -269,8 +265,7 @@ const styles = StyleSheet.create({
   alone_btn: {
     paddingVertical: 14,
     paddingHorizontal: 42,
-    // backgroundColor: "#FF5330",
-    backgroundColor: "red",
+    backgroundColor: "#ff4330",
     borderRadius: 12,
     marginTop: 12,
   },

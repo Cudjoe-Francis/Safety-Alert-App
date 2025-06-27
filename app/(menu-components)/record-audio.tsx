@@ -196,14 +196,14 @@ export default function VoiceMemoScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 40, backgroundColor: '#fff' },
   recordButton: {
-    backgroundColor: '#28a745',
-    padding: 15,
+    backgroundColor: '#ff5330',
+    paddingVertical: 10,
     borderRadius: 10,
     marginBottom: 20,
   },
   stopButton: {
     backgroundColor: '#dc3545',
-    padding: 15,
+    padding: 10,
     borderRadius: 10,
     marginBottom: 20,
   },

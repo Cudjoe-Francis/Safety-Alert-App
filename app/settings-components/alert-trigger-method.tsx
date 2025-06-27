@@ -38,7 +38,7 @@ const AlertTriggerMethodScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
         <Text style={styles.title}>Alert Trigger Method</Text>
       </View>
@@ -53,7 +53,7 @@ const AlertTriggerMethodScreen = () => {
             <Ionicons
               name={selectedMethod === method ? 'radio-button-on' : 'radio-button-off'}
               size={24}
-              color="#007AFF"
+              color="#ff5330"
               style={{ marginRight: 10 }}
             />
             <Text style={styles.methodText}>{method}</Text>
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
+    backgroundColor: '#ff5330',
+    paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 25,

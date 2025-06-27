@@ -11,7 +11,7 @@ const FAQsScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
         <Text style={styles.title}>FAQs</Text>
       </View>

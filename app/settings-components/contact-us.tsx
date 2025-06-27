@@ -39,7 +39,7 @@ const ContactUsScreen = () => {
       >
         <View style={styles.header}>
           <Pressable onPress={router.back} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={28} color="#000" />
+            <Ionicons name="chevron-back" size={28} color="#ff5330" />
           </Pressable>
           <Text style={styles.title}>Contact Us</Text>
         </View>
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
+    backgroundColor: '#ff5330',
+    paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 5,

@@ -11,7 +11,7 @@ const TermsAndConditionsScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
         <Text style={styles.title}>Terms & Conditions</Text>
       </View>
@@ -20,9 +20,9 @@ const TermsAndConditionsScreen = () => {
         <Text style={styles.text}>
           By using the Safety Alert App, you agree to the following terms:
           {'\n\n'}
-          1. You will use the app for emergency purposes only.{'\n'}
-          2. You consent to the use of location data during alerts.{'\n'}
-          3. We are not liable for any misuse of the app or failure of third-party services.{'\n'}
+          1. You will use the app for emergency purposes only.{'\n\n'}
+          2. You consent to the use of location data during alerts.{'\n\n'}
+          3. We are not liable for any misuse of the app or failure of third-party services.{'\n\n'}
           4. These terms may change without notice.
         </Text>
       </ScrollView>

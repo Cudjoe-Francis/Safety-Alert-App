@@ -9,8 +9,7 @@ import {
 import React, { useState } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
-import { replace } from "expo-router/build/global-state/routing";
-import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
+import { StatusBar } from "expo-status-bar";
 
 const Settings = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -27,15 +26,6 @@ const Settings = () => {
           <View style={styles.single_settings_ctn}>
             {/* <Entypo name="location-pin" size={24} color="black" /> */}
             <Text style={styles.single_settings}>Location Services</Text>
-            <Entypo name="chevron-small-right" size={24} color="grey" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push("/settings-components/security-agencies")}
-        >
-          <View style={styles.single_settings_ctn}>
-            <Text style={styles.single_settings}>Select Security Agencies</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
@@ -66,8 +56,8 @@ const Settings = () => {
             style={styles.switch}
             value={isDarkMode}
             onValueChange={(prev) => setIsDarkMode((prev) => !prev)}
-            // trackColor={{true: 'pink'}}
-            // thumbColor='#f4f3f4'
+            trackColor={{true: '#ff5330', false: 'ccc'}}
+            thumbColor='#fff'
           />
         </View>
 
@@ -86,31 +76,14 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Support settings */}
-      {/* <Text style={styles.heading}>Support</Text> */}
-
       <View style={styles.container}>
-        <TouchableOpacity>
-          <View style={styles.single_settings_ctn}>
-            <Text style={styles.single_settings}>Test Emergency Alert</Text>
-            <Entypo name="chevron-small-right" size={24} color="grey" />
-          </View>
-        </TouchableOpacity>
+
 
         <TouchableOpacity
           onPress={() => router.push("/settings-components/faqs")}
         >
           <View style={styles.single_settings_ctn}>
             <Text style={styles.single_settings}>FAQs</Text>
-            <Entypo name="chevron-small-right" size={24} color="grey" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push("/settings-components/report-problem")}
-        >
-          <View style={styles.single_settings_ctn}>
-            <Text style={styles.single_settings}>Report a Problem</Text>
             <Entypo name="chevron-small-right" size={24} color="grey" />
           </View>
         </TouchableOpacity>
@@ -125,9 +98,6 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      {/* About the App */}
-
-      {/* <Text style={styles.heading}>About</Text> */}
 
       <View style={styles.container}>
         <TouchableOpacity
@@ -181,13 +151,7 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        onPress={() => replace("/signin")}
-        style={styles.logoutButton}
-      >
-        <SimpleLineIcons name="logout" size={18} color="#fff" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+      <StatusBar style="dark" />
     </ScrollView>
   );
 };
@@ -213,14 +177,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 10,
-    // borderBottomWidth: 1,
-    // borderColor: "#eee",
+    // borderBottomWidth: 1,////////////////
+    // borderColor: "#eee",//////////////
   },
 
   dark_mode_ctn: {
-    paddingVertical: 5,
+    paddingVertical: 3,
   },
 
   last_single_settings_ctn: {
@@ -232,13 +196,13 @@ const styles = StyleSheet.create({
   },
 
   switch: {
-    transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
+    transform: [{ scaleX: 1 }, { scaleY: 1 }],
     padding: 0,
     margin: 0,
   },
 
   logoutButton: {
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     marginTop: 30,
     paddingVertical: 10,
     flexDirection: "row",

@@ -45,7 +45,7 @@ const Home = () => {
               >
                 {/* profile icon here */}
 
-                <FontAwesome5 name="user-circle" size={28} color="#ff4330" />
+                <FontAwesome5 name="user-circle" size={28} color="#ff5330" />
 
                 <View style={{ alignItems: "center" }}>
                   <Text style={styles.profile_name}>Hello Deep</Text>
@@ -74,7 +74,7 @@ const Home = () => {
                   <View style={{ width: 70 }}>
                     <Text style={styles.find_help_text}>Find Help nearby</Text>
                   </View>
-                  <Entypo name="location-pin" size={32} color="#ff4330" />
+                  <Entypo name="location-pin" size={32} color="#ff5330" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -96,7 +96,7 @@ const Home = () => {
                       <FontAwesome5
                         name="hospital-alt"
                         size={20}
-                        color="#ff4330"
+                        color="#ff5330"
                       />
                       <Text style={styles.popupText}>Hospitals</Text>
                     </TouchableOpacity>
@@ -124,7 +124,7 @@ const Home = () => {
               style={styles.emergency_btn}
               // onPress={() => alert("Emergency button pressed!")}
             >
-              <FontAwesome name="dot-circle-o" size={220} color="#ff4330" />
+              <FontAwesome name="dot-circle-o" size={220} color="#ff5330" />
             </TouchableOpacity>
           </View>
 
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
 
   see_profile: {
-    color: "#ff4330",
+    color: "#ff5330",
     fontSize: 16,
     fontWeight: "500",
   },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   },
 
   find_help_text: {
-    color: "#ff4330",
+    color: "#ff5330",
     fontWeight: "500",
     fontSize: 16,
     textAlign: "center",
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   alone_btn: {
     paddingVertical: 14,
     paddingHorizontal: 42,
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     borderRadius: 12,
     marginTop: 12,
   },

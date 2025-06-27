@@ -15,14 +15,14 @@ const googleLogo = require("..//../assets/images/google.png");
 const instagramLogo = require("..//../assets/images/instagram.jpeg");
 const facebookLogo = require("..//../assets/images/facebook.png");
 
-const backgroundImage = require("..//../assets/images/flashBackground_4.jpg");
+const backgroundImage = require("..//../assets/images/flashBackground.png");
 
 const FlashScreen = () => {
   return (
     <ImageBackground source={backgroundImage} style={styles.bgImage}>
       <SafeAreaView style={styles.container}>
         <View style={styles.topContainer}>
-          <Text style={[styles.welcomeText, styles.safetyText]}>Welcome To Safety</Text>
+          <Text style={[styles.welcomeText, styles.safetyText]}>Welcome To Safety Alert App</Text>
           <Text style={styles.welcomeText}>Your Safety Matters</Text>
         </View>
 
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
 
   bottomContainer: {
-    flex: 0.4,
+    flex: 0.42,
   },
 
   img: {
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
 
   safetyText: {
     paddingTop: 20,
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
     fontStyle: 'normal',
   },
@@ -113,7 +113,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 340,
     borderRadius: 20,
-    backgroundColor: "#fe1e16",
+    backgroundColor: "#FF5330",
+    // backgroundColor: "#ff5330",
     paddingVertical: 10,
   },
 

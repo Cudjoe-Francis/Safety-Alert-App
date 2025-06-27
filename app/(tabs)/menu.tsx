@@ -17,8 +17,8 @@ const Contacts = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headingContainer}>
-        <Text style={styles.heading}>Hello there</Text>
-        <Text style={styles.heading}>How can we help you today?</Text>
+        <Text style={styles.heading}>Hi there!</Text>
+        <Text style={styles.heading}>We`re here to help you feel safe</Text>
       </View>
 
       <ScrollView style={styles.bottomContainer}>
@@ -26,7 +26,7 @@ const Contacts = () => {
           onPress={() => push("/(menu-components)/emergency-contacts")}
         >
           <View style={styles.ctn}>
-            <MaterialIcons name="contact-emergency" size={24} color="red" />
+            <MaterialIcons name="contact-emergency" size={24} color="#ff5330" />
             <Text style={styles.text}>Emergency contacts</Text>
           </View>
         </TouchableOpacity>
@@ -35,7 +35,7 @@ const Contacts = () => {
           onPress={() => push("/(menu-components)/record-audio")}
         >
           <View style={styles.ctn}>
-            <Foundation name="record" size={25} color="red" />
+            <Foundation name="record" size={25} color="#ff5330" />
             <Text style={styles.text}>Record audio</Text>
           </View>
         </TouchableOpacity>
@@ -44,7 +44,7 @@ const Contacts = () => {
           onPress={() => push("/(menu-components)/live-location-sharing")}
         >
           <View style={styles.ctn}>
-            <Entypo name="location-pin" size={24} color="red" />
+            <Entypo name="location-pin" size={24} color="#ff5330" />
             <Text style={styles.text}>Live Location Sharing</Text>
           </View>
         </TouchableOpacity>
@@ -53,8 +53,17 @@ const Contacts = () => {
           onPress={() => push("/(menu-components)/incident-reports")}
         >
           <View style={styles.ctn}>
-            <MaterialIcons name="report" size={24} color="red" />
+            <MaterialIcons name="report" size={24} color="#ff5330" />
             <Text style={styles.text}>Incident Report</Text>
+          </View>
+        </TouchableOpacity>        
+
+        <TouchableOpacity
+          onPress={() => push("/(menu-components)/security-agencies")}
+        >
+          <View style={styles.ctn}>
+            <MaterialIcons name="report" size={24} color="#ff5330" />
+            <Text style={styles.text}>Select Security Agency</Text>
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -68,12 +77,12 @@ export default Contacts;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
   },
 
   headingContainer: {
     paddingHorizontal: 20,
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     paddingBottom: 20,
     justifyContent: "flex-end",
     flex: 0.2,
@@ -81,7 +90,7 @@ const styles = StyleSheet.create({
 
   heading: {
     color: "#fff",
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "bold",
   },
 
@@ -89,15 +98,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     flex: 0.8,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 16,
     marginBottom: -40,
   },
 
   ctn: {
     borderWidth: 1,
-    borderColor: "#ff4330",
-    padding: 20,
-    borderRadius: 4,
+    borderColor: "#ff5330",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     columnGap: 20,

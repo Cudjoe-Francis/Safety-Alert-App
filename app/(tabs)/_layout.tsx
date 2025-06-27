@@ -1,8 +1,10 @@
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs } from "expo-router";
+import { replace } from "expo-router/build/global-state/routing";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
+import { Text, TouchableOpacity } from "react-native";
 
 const TabsLayout = () => {
   return (
@@ -10,7 +12,7 @@ const TabsLayout = () => {
       <StatusBar style="dark" />
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: "#ff4330",
+          tabBarActiveTintColor: "#ff5330",
           tabBarInactiveTintColor: "#000",
           tabBarShowLabel: false,
           headerShown: false,
@@ -64,6 +66,12 @@ const TabsLayout = () => {
             headerShown: true,
             tabBarIcon: ({ color }) => (
               <MaterialIcons name="settings" size={24} color={color} />
+            ),
+            headerRight: () => (
+              <TouchableOpacity onPress={() => replace('/(auth)/signin')} style={{ paddingRight: 18, borderRadius: 10, padding: 6 }}>
+                <Text style={{ fontSize: 16, color: '#ff5330', fontWeight: 'bold' }}>Log out</Text>
+                {/* <SimpleLineIcons name="logout" size={24} color="black" /> */}
+              </TouchableOpacity>
             ),
           }}
         />

@@ -1,5 +1,4 @@
 import {
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -30,9 +29,9 @@ const SignUp = () => {
         <Text style={styles.text}>Password</Text>
         <TextInput style={styles.input} secureTextEntry />
 
-        <Pressable>
+        <TouchableOpacity>
           <Text style={styles.forgotPasswordText}>Forgot Password</Text>
-        </Pressable>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.signUpBtn}
@@ -57,7 +56,7 @@ export default SignUp;
 
 const styles = StyleSheet.create({
   mainContainer: {
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     flex: 1,
   },
 
@@ -71,7 +70,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 22,
     fontWeight: "bold",
-    width: 100,
+    width: 80,
   },
 
   formContainer: {
@@ -92,7 +91,7 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    color: "#ff4330",
+    color: "#ff5330",
   },
 
   input: {
@@ -100,12 +99,13 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     fontSize: 20,
     borderColor: "#949494",
-    paddingTop: 10,
+    // paddingTop: 10,
   },
 
   forgotPasswordText: {
     marginTop: -10,
     textAlign: "right",
+    color: '#FF5330',
   },
 
   signInContainer: {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
 
   signUpBtn: {
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     borderRadius: 20,
     marginTop: 120,
     paddingVertical: 10,
@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
   },
 
   signInText: {
-    color: "#ff4330",
+    color: "#ff5330",
   },
 });

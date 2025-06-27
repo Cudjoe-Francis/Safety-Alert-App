@@ -15,7 +15,7 @@ const DeveloperInfoScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5530" />
         </Pressable>
         <Text style={styles.title}>Developer Info</Text>
       </View>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#ff5330',
     fontWeight: '600',
   },
 });

@@ -61,7 +61,7 @@ export default SignUp;
 
 const styles = StyleSheet.create({
   mainContainer: {
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     flex: 1,
   },
 
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    color: "#ff4330",
+    color: "#ff5330",
   },
 
   input: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
 
   signUpBtn: {
-    backgroundColor: "#ff4330",
+    backgroundColor: "#ff5330",
     borderRadius: 20,
     marginTop: 30,
     paddingVertical: 10,
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
   },
 
   signInText: {
-    color: "#ff4330",
+    color: "#ff5330",
   },
 });

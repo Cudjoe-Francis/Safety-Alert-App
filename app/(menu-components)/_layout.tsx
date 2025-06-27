@@ -1,5 +1,6 @@
-import { router, Stack } from "expo-router";
-// import AntDesign from "@expo/vector-icons/AntDesign";
+import { Stack } from "expo-router";
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 
 const MenuComponents = () => {
   return (
@@ -8,29 +9,48 @@ const MenuComponents = () => {
         name="emergency-contacts"
         options={{
           title: "Emergency Contacts",
+          headerLeft: () => (
+            <Ionicons style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
+          )
         }}
       />
+
       <Stack.Screen
         name="incident-reports"
         options={{
           title: "Incident Reports",
+          headerShown: false
         }}
       />
+
       <Stack.Screen
         name="live-location-sharing"
         options={{
           title: "Live Location Sharing",
+          headerLeft: () => (
+            <Ionicons style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
+          )
         }}
       />
+
       <Stack.Screen
         name="record-audio"
         options={{
           title: "Record Audio",
-          // headerLeft: (() => (
-          //   <AntDesign name="arrowleft" size={24} color="black" onPress={() => router.back()}/>
-          // ))
+          headerLeft: () => (
+            <Ionicons style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
+          )
         }}
       />
+
+      <Stack.Screen
+        name="security-agencies"
+        options={{ 
+          // title: "Select Security Agencies", 
+          headerShown: false
+         }}
+      />
+
     </Stack>
   );
 };

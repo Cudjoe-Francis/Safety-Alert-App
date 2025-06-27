@@ -44,7 +44,7 @@ const SelectSecurityAgenciesScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
         <Text style={styles.title}>Select Security Agencies</Text>
       </View>
@@ -59,7 +59,7 @@ const SelectSecurityAgenciesScreen = () => {
             <Ionicons
               name={selectedAgencies.includes(agency) ? 'checkbox' : 'square-outline'}
               size={24}
-              color="#007AFF"
+              color="#ff5330"
               style={{ marginRight: 10 }}
             />
             <Text style={styles.agencyText}>{agency}</Text>
@@ -112,8 +112,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
+    backgroundColor: '#ff5330',
+    paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 25,

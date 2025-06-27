@@ -31,7 +31,7 @@ const EnablePreferencesScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
         <Text style={styles.title}>Enable Preferences</Text>
       </View>
@@ -43,7 +43,7 @@ const EnablePreferencesScreen = () => {
             <Switch
               value={value}
               onValueChange={() => togglePreference(key as keyof typeof preferences)}
-              trackColor={{ false: '#ccc', true: '#007AFF' }}
+              trackColor={{ false: '#ccc', true: '#ff5330' }}
               thumbColor="#fff"
             />
           </View>
@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
+    paddingVertical: 12,
+    // borderBottomWidth: 1,
+    // borderColor: '#eee',
   },
   label: {
     fontSize: 16,

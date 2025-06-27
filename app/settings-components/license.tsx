@@ -11,7 +11,7 @@ const LicencesScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
         <Text style={styles.title}>Licences</Text>
       </View>
@@ -19,10 +19,10 @@ const LicencesScreen = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.text}>
           This app uses open-source libraries and tools, which are licensed as follows:
-          {'\n\n'}• React Native - MIT License{'\n'}
-          • Expo - MIT License{'\n'}
-          • react-native-safe-area-context - MIT License{'\n'}
-          • @expo/vector-icons - MIT License{'\n\n'}
+          {'\n\n'}• React Native{'\n'}
+          • Expo{'\n'}
+          • react-native-safe-area-context{'\n'}
+          • @expo/vector-icons{'\n\n'}
           Full license texts are available on their respective GitHub repositories.
         </Text>
       </ScrollView>

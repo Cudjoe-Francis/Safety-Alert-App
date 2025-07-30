@@ -34,9 +34,9 @@ const MenuComponents = () => {
       />
 
       <Stack.Screen
-        name="record-audio"
+        name="history"
         options={{
-          title: "Record Audio",
+          title: "History",
           headerLeft: () => (
             <Ionicons onPress={()=> router.back()}  style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
           )
@@ -44,7 +44,7 @@ const MenuComponents = () => {
       />
 
       <Stack.Screen
-        name="security-agencies"
+        name="notifications"
         options={{ 
           // title: "Select Security Agencies", 
           headerShown: false

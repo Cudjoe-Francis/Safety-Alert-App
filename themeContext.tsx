@@ -1,5 +1,6 @@
+// context/ThemeContext.tsx
 import React, { createContext, useContext, useState } from 'react';
-import { darkTheme, lightTheme } from './theme'
+import { darkTheme, lightTheme } from './theme';
 
 type Theme = typeof lightTheme;
 

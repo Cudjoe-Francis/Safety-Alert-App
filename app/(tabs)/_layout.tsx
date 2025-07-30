@@ -23,11 +23,11 @@ const TabsLayout = () => {
           tabBarStyle: {
             paddingTop: 5,
             borderWidth: 1,
-            borderTopColor: isDarkMode ? "#363636" : "#ddd",
+            borderTopColor: isDarkMode ? "#121212" : "#ddd",
             borderBottomColor: isDarkMode ? "#000" : "#fff",
             borderRightColor: isDarkMode ? "#000" : "#fff",
             borderLeftColor: isDarkMode ? "#000" : "#fff",
-            backgroundColor: isDarkMode ? "#121212" : "#fff",
+            backgroundColor: isDarkMode ? "#000" : "#fff",
           },
         }}
         initialRouteName="index"
@@ -54,7 +54,7 @@ const TabsLayout = () => {
           }}
         />
 
-        <Tabs.Screen
+        {/* <Tabs.Screen
           name="settings"
           options={{
             title: "Settings",
@@ -63,6 +63,31 @@ const TabsLayout = () => {
               backgroundColor: isDarkMode? "#121212" : "#fff",
             },
             headerTintColor: isDarkMode ? "#fff" : "#000",
+            tabBarIcon: ({ color }) => (
+              <MaterialIcons name="settings" size={24} color={color} />
+            ),
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={() => replace("/(auth)/signin")}
+                style={{ paddingRight: 18, borderRadius: 10, padding: 6 }}
+              >
+                <Text
+                  style={{ fontSize: 16, color: "#ff5330", fontWeight: "bold" }}
+                >
+                  Log out
+                </Text>
+              </TouchableOpacity>
+            ),
+          }}
+        /> */}
+
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: "Settings",
+            headerShown: true,
+            headerTintColor: isDarkMode ? "#fff" : "#000",
+            
             tabBarIcon: ({ color }) => (
               <MaterialIcons name="settings" size={24} color={color} />
             ),

@@ -8,7 +8,7 @@ import {
   Animated,
   Easing,
   Platform,
-  Linking,  
+  Linking,
 } from "react-native";
 import React, { useState, ReactNode, useRef, useEffect } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -17,10 +17,11 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StatusBar } from "expo-status-bar";
 import UserDetailsModal from "../components/user-details";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import { useTheme } from "..//../themeContext";
+// import { LinearGradient } from "expo-linear-gradient";
 
-type ServiceId = 'hospital' | 'police' | 'fire' | 'campus';
+type ServiceId = "hospital" | "police" | "fire" | "campus";
 
 interface Service {
   name: string;
@@ -28,49 +29,92 @@ interface Service {
   icon: ReactNode;
 }
 
-// interface UserDetailsModalPlaceholderProps {
-//   closeModal: () => void;
-// }
-
-// const UserDetailsModalPlaceholder: React.FC<UserDetailsModalPlaceholderProps> = ({ closeModal }) => (
-//   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-//     <Text style={{ fontSize: 20, marginBottom: 20 }}>User Details</Text>
-//     <TouchableOpacity onPress={closeModal} style={{ padding: 10, backgroundColor: '#ff5330', borderRadius: 5 }}>
-//       <Text style={{ color: '#fff' }}>Close</Text>
-//     </TouchableOpacity>
-//   </View>
-// );
-
-
 const Home: React.FC = () => {
-
-
   // --- State Definitions with Types ---
-  const [isProfileModalVisible, setIsProfileModalVisible] = useState<boolean>(false);
+  const [isProfileModalVisible, setIsProfileModalVisible] =
+    useState<boolean>(false);
   const [showHelpPopup, setShowHelpPopup] = useState<boolean>(false);
   const [activeService, setActiveService] = useState<ServiceId | null>(null);
   const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [isSosActive, setIsSosActive] = useState<boolean>(false);
   // State to store the user's current location
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   // State to store any error messages related to location
   const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
 
-      const { isDarkMode, toggleTheme, theme } = useTheme();
+  const { isDarkMode, toggleTheme, theme } = useTheme();
 
   // Animated value for SOS pulse animation
   const sosPulse = useRef(new Animated.Value(1)).current;
-  // Ref to store the animation instance
   const sosAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+
+const animatedBorderColor = useRef(new Animated.Value(0)).current;
+const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+
+const interpolateBorderColor = animatedBorderColor.interpolate({
+  inputRange: [0, 0.25, 0.5, 0.75, 1],
+  outputRange: [
+    "rgb(255,0,0)",
+    "rgb(0,255,0)",
+    "rgb(0,0,255)",
+    "rgb(255,255,0)",
+    "rgb(255,0,0)",
+  ],
+});
+
+useEffect(() => {
+  if (isDarkMode) {
+    // Start RGB animation when dark mode is on
+    animationRef.current = Animated.loop(
+      Animated.timing(animatedBorderColor, {
+        toValue: 1,
+        duration: 10000,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      })
+    );
+    animationRef.current.start();
+  } else {
+    // Reset animation when dark mode is off
+    if (animationRef.current) {
+      animationRef.current.stop();
+      animationRef.current = null;
+    }
+    animatedBorderColor.setValue(0); // Reset color to initial
+  }
+}, [isDarkMode]);
+
+
+
+
+
+  /////////////////////////////////////////////////////////////////////////////////
+
+  
+
+  // const interpolateBorderColor = animatedBorderColor.interpolate({
+  //   inputRange: [0, 0.25, 0.5, 0.75, 1],
+  //   outputRange: [
+  //     "rgb(255,0,0)",
+  //     "rgb(0,255,0)",
+  //     "rgb(0,0,255)",
+  //     "rgb(255,255,0)",
+  //     "rgb(255,0,0)",
+  //   ],
+  // });
 
   // --- useEffect for Location Permission and Fetching ---
   useEffect(() => {
     (async () => {
-      // Request foreground location permissions
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationErrorMsg('Permission to access location was denied. Cannot find nearby places.');
-        console.error('Location permission denied.');
+      if (status !== "granted") {
+        setLocationErrorMsg(
+          "Permission to access location was denied. Cannot find nearby places."
+        );
+        console.error("Location permission denied.");
         return;
       }
 
@@ -83,8 +127,10 @@ const Home: React.FC = () => {
         });
         console.log("User Location fetched:", location.coords);
       } catch (error) {
-        setLocationErrorMsg('Could not get current location. Please ensure GPS is enabled.');
-        console.error('Error getting location:', error);
+        setLocationErrorMsg(
+          "Could not get current location. Please ensure GPS is enabled."
+        );
+        console.error("Error getting location:", error);
       }
     })();
   }, []); // Empty dependency array means this effect runs once on mount
@@ -116,10 +162,8 @@ const Home: React.FC = () => {
   const handleCloseCancelModal = (): void => {
     setShowCancelModal(false);
   };
-  
-  const handleSosPress = (): void => {
-    
 
+  const handleSosPress = (): void => {
     setIsSosActive(true);
     console.log("SOS button pressed! Notifying contacts...");
 
@@ -160,9 +204,9 @@ const Home: React.FC = () => {
    */
   const openMapsForQuery = async (query: string): Promise<void> => {
     const encodedQuery = encodeURIComponent(query);
-    let url: string = '';
+    let url: string = "";
 
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       // Try to open Google Maps first on iOS
       const googleMapsUrl = userLocation
         ? `comgooglemaps://?q=${encodedQuery}&center=${userLocation.latitude},${userLocation.longitude}`
@@ -177,7 +221,9 @@ const Home: React.FC = () => {
         url = userLocation
           ? `http://maps.apple.com/?ll=${userLocation.latitude},${userLocation.longitude}&q=${encodedQuery}`
           : `http://maps.apple.com/?q=${encodedQuery}`;
-        console.log('Google Maps not installed on iOS, falling back to Apple Maps.');
+        console.log(
+          "Google Maps not installed on iOS, falling back to Apple Maps."
+        );
       }
     } else {
       // Android: Google Maps via geo URI (typically defaults to Google Maps)
@@ -188,34 +234,62 @@ const Home: React.FC = () => {
 
     // Attempt to open the URL
     Linking.openURL(url).catch((err) => {
-      console.error('An error occurred trying to open maps:', err);
+      console.error("An error occurred trying to open maps:", err);
       // You could add a user-facing message here, e.g., using a custom modal or toast
       // For example: Alert.alert('Error', 'Could not open map application. Please ensure you have a map app installed.');
     });
   };
 
-
   // --- Service Button Data with Type ---
   const services: Service[] = [
-    { name: 'Hospital', id: 'hospital', icon: <FontAwesome5 name="hospital-alt" size={40} color="#008000" /> },
-    { name: 'Police', id: 'police', icon: <MaterialIcons name="security" size={40} color="#121a68" /> },
-    { name: 'Fire Service', id: 'fire', icon: <MaterialIcons name="local-fire-department" size={40} color="red" /> },
-    { name: 'Campus Watch', id: 'campus', icon: <MaterialIcons name="security" size={40} color="#5d3fd3" /> },
+    {
+      name: "Hospital",
+      id: "hospital",
+      icon: <FontAwesome5 name="hospital-alt" size={40} color="#008000" />,
+    },
+    {
+      name: "Police",
+      id: "police",
+      icon: <MaterialIcons name="security" size={40} color="#121a68" />,
+    },
+    {
+      name: "Fire Service",
+      id: "fire",
+      icon: (
+        <MaterialIcons name="local-fire-department" size={40} color="red" />
+      ),
+    },
+    {
+      name: "Campus Watch",
+      id: "campus",
+      icon: <MaterialIcons name="security" size={40} color="#5d3fd3" />,
+    },
   ];
-
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={[styles.mainContainer, { backgroundColor: isDarkMode? '#121212' : '#f5f5f5' } ]}>
+      <SafeAreaView
+        style={[
+          styles.mainContainer,
+          { backgroundColor: isDarkMode ? "#000" : "#fff" },
+        ]}
+      >
         {/* Pressable to close the help popup when tapping outside */}
         <Pressable onPress={() => setShowHelpPopup(false)} style={{ flex: 1 }}>
           {/* Top Bar: Profile and Find Help */}
           <View style={styles.profile_location_help_ctn}>
             {/* Profile Section */}
             <View style={styles.profileContainer}>
-              <FontAwesome5 name="user-circle" size={28} color="#ff5330" />
+              <FontAwesome5 name="user-circle" size={24} color="#ff5330" />
               <View>
-                <Text style={styles.profile_name}>Hello Deep</Text>
+                <Text
+                  style={[
+                    styles.profile_name,
+                    { color: isDarkMode ? "#fff" : "#555" },
+                  ]}
+                >
+                  Hello Deep
+                </Text>
                 <TouchableOpacity onPress={handleOpenProfileModal}>
                   <Text style={styles.see_profile}>See Profile</Text>
                 </TouchableOpacity>
@@ -225,13 +299,13 @@ const Home: React.FC = () => {
             {/* Find Help Section */}
             <View style={styles.find_help_ctn}>
               <TouchableOpacity
-                style={{ flexDirection: "row", alignItems: 'center' }}
+                style={{ flexDirection: "row", alignItems: "center" }}
                 onPress={() => setShowHelpPopup((prev) => !prev)} // Toggle help popup visibility
               >
                 <View style={{ width: 70 }}>
                   <Text style={styles.find_help_text}>Find Help nearby</Text>
                 </View>
-                <Entypo name="location-pin" size={32} color="#ff5330" />
+                <Entypo name="location-pin" size={28} color="#ff5330" />
               </TouchableOpacity>
             </View>
           </View>
@@ -244,7 +318,9 @@ const Home: React.FC = () => {
             presentationStyle="pageSheet"
           >
             {/* Using the actual UserDetailsModal component here */}
-            <UserDetailsModal closeModal={() => setIsProfileModalVisible(false)} />
+            <UserDetailsModal
+              closeModal={() => setIsProfileModalVisible(false)}
+            />
           </Modal>
 
           {/* Find Help Nearby Popup */}
@@ -256,7 +332,7 @@ const Home: React.FC = () => {
                   style={styles.option}
                   onPress={() => {
                     setShowHelpPopup(false); // Close popup after selection
-                    openMapsForQuery('police station'); // Open maps for police stations
+                    openMapsForQuery("police station"); // Open maps for police stations
                   }}
                 >
                   <MaterialIcons name="security" size={24} color="#ff4330" />
@@ -267,7 +343,7 @@ const Home: React.FC = () => {
                   style={styles.option}
                   onPress={() => {
                     setShowHelpPopup(false); // Close popup after selection
-                    openMapsForQuery('hospital'); // Open maps for hospitals
+                    openMapsForQuery("hospital"); // Open maps for hospitals
                   }}
                 >
                   <FontAwesome5 name="hospital-alt" size={20} color="#ff5330" />
@@ -275,54 +351,92 @@ const Home: React.FC = () => {
                 </TouchableOpacity>
                 {/* Display location error if any */}
                 {locationErrorMsg && (
-                    <Text style={styles.locationErrorText}>{locationErrorMsg}</Text>
+                  <Text style={styles.locationErrorText}>
+                    {locationErrorMsg}
+                  </Text>
                 )}
               </View>
             </View>
           )}
 
           {/* Emergency Assistance Section */}
-          <Text style={[styles.emergency_help_text, { color: isDarkMode? '#fff' : '#000' }]}>Emergency Assistance</Text>
+          <Text
+            style={[
+              styles.emergency_help_text,
+              { color: isDarkMode ? "#fff" : "#000" },
+            ]}
+          >
+            Emergency Assistance
+          </Text>
 
           {/* Middle Buttons View for emergency services */}
           <View style={styles.middleContainer}>
             {services.map((service) => {
               const isThisServiceActive = activeService === service.id;
               const isAnyServiceActive = activeService !== null;
-              // Disable other buttons if one service is active
               const isDisabled = isAnyServiceActive && !isThisServiceActive;
 
               return (
-                <TouchableOpacity
+                <Animated.View
                   key={service.id}
                   style={[
                     styles.assistanceBtn,
+                    isDarkMode
+                      ? {
+                          ...styles.assistanceBtnDarkMode,
+                          borderColor: interpolateBorderColor,
+                        }
+                      : styles.assistanceBtnLightMode,
                     isDisabled && styles.disabledBtn,
-                    // { backgroundColor: isDarkMode? '#f4f4f4' : theme.background }
                   ]}
-                  onPress={() => handleServicePress(service.id)}
-                  disabled={isAnyServiceActive} // Disable if any service is already active
                 >
-                  {service.icon}
-                  <Text style={styles.assistanceBtnText}>{service.name}</Text>
-
-                  {/* Cancel button appears if this service is active */}
-                  {isThisServiceActive && (
-                    <TouchableOpacity
-                      style={styles.cancelBtn}
-                      onPress={handleOpenCancelModal}
+                  <TouchableOpacity
+                    key={service.id}
+                    style={[
+                      [
+                        styles.assistanceBtn,
+                        isDarkMode
+                          ? styles.assistanceBtnDarkMode
+                          : styles.assistanceBtnLightMode,
+                      ],
+                      isDisabled && styles.disabledBtn,
+                    ]}
+                    onPress={() => handleServicePress(service.id)}
+                    disabled={isAnyServiceActive}
+                  >
+                    {service.icon}
+                    <Text
+                      style={[
+                        styles.assistanceBtnText,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
                     >
-                      <MaterialIcons name="cancel" size={28} color="#fff" />
-                      <Text style={styles.cancelBtnText}>Cancel</Text>
-                    </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
+                      {service.name}
+                    </Text>
+
+                    {/* Cancel button appears if this service is active */}
+                    {isThisServiceActive && (
+                      <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={handleOpenCancelModal}
+                      >
+                        <MaterialIcons name="cancel" size={28} color="#fff" />
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                      </TouchableOpacity>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
               );
             })}
           </View>
 
           {/* Alert Text and SOS Button */}
-          <Text style={[styles.alertText, { color: isDarkMode? '#bfc1c4' : 'grey' }]}>
+          <Text
+            style={[
+              styles.alertText,
+              { color: isDarkMode ? "#bfc1c4" : "grey" },
+            ]}
+          >
             Alert your contacts, You are in danger
           </Text>
 
@@ -335,7 +449,9 @@ const Home: React.FC = () => {
               <MaterialIcons name="sos" size={36} color="#fff" />
             </Animated.View>
           </TouchableOpacity>
-          {isSosActive && <Text style={styles.notifyingText}>Alerting your contacts...</Text>}
+          {isSosActive && (
+            <Text style={styles.notifyingText}>Alerting your contacts...</Text>
+          )}
         </Pressable>
 
         {/* --- Cancellation Confirmation Modal --- */}
@@ -369,7 +485,7 @@ const Home: React.FC = () => {
           </View>
         </Modal>
 
-        <StatusBar style={isDarkMode? 'light' : "dark"} />
+        <StatusBar style={isDarkMode ? "light" : "dark"} />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -385,12 +501,9 @@ const styles = StyleSheet.create({
   profile_location_help_ctn: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
 
   profileContainer: {
@@ -400,7 +513,6 @@ const styles = StyleSheet.create({
   },
 
   profile_name: {
-    color: "#555",
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -452,15 +564,15 @@ const styles = StyleSheet.create({
 
   popupText: {
     fontSize: 17,
-    color: '#333',
+    color: "#333",
   },
 
   locationErrorText: {
     fontSize: 12,
-    color: 'red',
+    color: "red",
     marginTop: 5,
     paddingHorizontal: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   emergency_help_text: {
@@ -469,7 +581,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingTop: 40,
     paddingBottom: 20,
-    // color: '#111'
   },
 
   middleContainer: {
@@ -483,27 +594,57 @@ const styles = StyleSheet.create({
   },
 
   assistanceBtn: {
-    backgroundColor: "#fff",
     borderRadius: 15,
     paddingVertical: 20,
     alignItems: "center",
-    justifyContent: 'center',
+    justifyContent: "center",
     width: 140,
     height: 140,
     rowGap: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 5,
-    position: 'relative',
-    overflow: 'hidden',
+    position: "relative",
+  },
+
+  assistanceBtnLightMode: {
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
+
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+
+  assistanceBtnDarkMode: {
+    backgroundColor: "#000",
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        borderColor: "#fff",
+        borderWidth: 1,
+      },
+
+      android: {
+        elevation: 10,
+        borderColor: "#fff",
+        borderWidth: 1,
+      },
+    }),
   },
 
   assistanceBtnText: {
-    color: "#333",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   alertText: {
@@ -523,103 +664,103 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     marginTop: 15,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.3,
   },
 
   disabledBtn: {
     opacity: 0.4,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
   },
 
   cancelBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 15,
     zIndex: 5,
   },
 
   cancelBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
     marginTop: 4,
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
 
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 15,
     padding: 20,
-    width: '100%',
+    width: "100%",
     maxWidth: 340,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.25,
   },
 
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
 
   modalMessage: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 25,
-    color: '#555',
+    color: "#555",
     lineHeight: 22,
   },
 
   modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
 
   modalButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: 5,
   },
 
   modalButtonCancel: {
-    backgroundColor: '#6c757d',
+    backgroundColor: "#6c757d",
   },
 
   modalButtonConfirm: {
-    backgroundColor: '#ff5330',
+    backgroundColor: "#ff5330",
   },
 
   modalButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 
   notifyingText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
     fontSize: 14,
-    color: '#ff5330',
-    fontWeight: 'bold',
-  }
+    color: "#ff5330",
+    fontWeight: "bold",
+  },
 });

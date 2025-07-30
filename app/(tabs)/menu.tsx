@@ -2,130 +2,114 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  TouchableOpacity,
 } from "react-native";
 import React from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import Foundation from "@expo/vector-icons/Foundation";
-import Entypo from "@expo/vector-icons/Entypo";
+import { useTheme } from "../../themeContext";
+import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { push } from "expo-router/build/global-state/routing";
+import { Ionicons, MaterialIcons, FontAwesome5, AntDesign } from "@expo/vector-icons";
 
-const Contacts = () => {
+const Menu = () => {
+  const { theme, isDarkMode } = useTheme();
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headingContainer}>
-        <Text style={styles.heading}>Hi there!</Text>
-        <Text style={styles.heading}>We`re here to help you feel safe</Text>
+    <View style={[styles.container, { backgroundColor: isDarkMode? theme.background : theme.background }]}>
+      
+      <Text style={[styles.title, { color: theme.text }]}>Quick Access</Text>
+    
+    <ScrollView
+      contentContainerStyle={{ paddingBottom: 50 }}
+      style={{ backgroundColor: theme.background }}
+    >
+
+      <View style={styles.menuContainer}>
+        {/* Emergency Contacts */}
+        <TouchableOpacity
+          style={[styles.card, { backgroundColor: theme.card }]}
+          onPress={() => router.push("/(menu-components)/emergency-contacts")}
+        >
+          <AntDesign name="contacts" size={24} color="#ff5330" />
+          <Text style={[styles.cardText, { color: theme.text }]}>
+            Emergency Contacts
+          </Text>
+        </TouchableOpacity>
+
+        {/* History */}
+        <TouchableOpacity
+          style={[styles.card, { backgroundColor: theme.card }]}
+          onPress={() => router.push("/(menu-components)/history")}
+        >
+          <MaterialIcons name="history" size={24} color="#ff5330" />
+          <Text style={[styles.cardText, { color: theme.text }]}>History</Text>
+        </TouchableOpacity>
+
+        {/* Incident Reports */}
+        <TouchableOpacity
+          style={[styles.card, { backgroundColor: theme.card }]}
+          onPress={() => router.push("/(menu-components)/incident-reports")}
+        >
+          <FontAwesome5 name="file-alt" size={22} color="#ff5330" />
+          <Text style={[styles.cardText, { color: theme.text }]}>
+            Incident Reports
+          </Text>
+        </TouchableOpacity>
+
+        {/* Notifications */}
+        <TouchableOpacity
+          style={[styles.card, { backgroundColor: theme.card }]}
+          onPress={() => router.push("/(menu-components)/notifications")}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#ff5330" />
+          <Text style={[styles.cardText, { color: theme.text }]}>
+            Notifications
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.bottomContainer}>
-        <TouchableOpacity
-          onPress={() => push("/(menu-components)/emergency-contacts")}
-        >
-          <View style={styles.ctn}>
-            <MaterialIcons name="contact-emergency" size={24} color="#ff5330" />
-            <Text style={styles.text}>Emergency contacts</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => push("/(menu-components)/record-audio")}
-        >
-          <View style={styles.ctn}>
-            <Foundation name="record" size={25} color="#ff5330" />
-            <Text style={styles.text}>Recorded Audios</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* <TouchableOpacity
-          onPress={() => push("/(menu-components)/live-location-sharing")}
-        >
-          <View style={styles.ctn}>
-            <Entypo name="location-pin" size={24} color="#ff5330" />
-            <Text style={styles.text}>Live Location Sharing</Text>
-          </View>
-        </TouchableOpacity> */}
-
-        <TouchableOpacity
-          onPress={() => push("/(menu-components)/incident-reports")}
-        >
-          <View style={styles.ctn}>
-            <MaterialIcons name="report" size={24} color="#ff5330" />
-            <Text style={styles.text}>Incident Report</Text>
-          </View>
-        </TouchableOpacity>        
-
-        <TouchableOpacity
-          onPress={() => push("/(menu-components)/security-agencies")}
-        >
-          <View style={styles.ctn}>
-            <MaterialIcons name="report" size={24} color="#ff5330" />
-            <Text style={styles.text}>Select Security Agency</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* <TouchableOpacity
-          onPress={() => push("/(menu-components)/security-agencies")}
-        >
-          <View style={styles.ctn}>
-            <MaterialIcons name="report" size={24} color="#ff5330" />
-            <Text style={styles.text}>Activities</Text>
-          </View>
-        </TouchableOpacity> */}
-
-      </ScrollView>
-      <StatusBar style="light" />
-    </SafeAreaView>
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
+    </ScrollView>
+    </View>
   );
 };
 
-export default Contacts;
+export default Menu;
 
 const styles = StyleSheet.create({
-  container: {
+
+  container: { 
     flex: 1,
-    backgroundColor: "#ff5330",
+    paddingTop: 50,
   },
 
-  headingContainer: {
-    paddingHorizontal: 20,
-    backgroundColor: "#ff5330",
-    paddingBottom: 20,
-    justifyContent: "flex-end",
-    flex: 0.2,
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginLeft: 20,
+    marginBottom: 12,
+    paddingBottom: 8,
   },
 
-  heading: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
+  menuContainer: {
+    marginHorizontal: 20,
+    borderRadius: 12,
+    gap: 15,
   },
 
-  bottomContainer: {
-    backgroundColor: "#fff",
-    flex: 0.8,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: -40,
-  },
-
-  ctn: {
-    borderWidth: 1,
-    borderColor: "#ff5330",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+  card: {
     flexDirection: "row",
     alignItems: "center",
-    columnGap: 20,
-    marginBottom: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    shadowColor: "#000",
+    elevation: 2,
+    gap: 16,
   },
 
-  text: {
-    // fontWeight: "500",
-    fontSize: 24,
+  cardText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

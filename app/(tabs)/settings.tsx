@@ -5,30 +5,56 @@ import {
   View,
   TouchableOpacity,
   Switch,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useTheme } from "..//../themeContext";
+import { useTheme } from "../../themeContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 const Settings = () => {
   const { isDarkMode, toggleTheme, theme } = useTheme();
+  const navigation = useNavigation();
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: isDarkMode
+          ? offsetY > 23
+            ? "#121212"
+            : "#000"
+          : "#fff",
+      },
+    });
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({
+        headerStyle: {
+          backgroundColor: isDarkMode ? "#000" : "#fff",
+        },
+      });
+    }, [isDarkMode, navigation])
+  );
 
   return (
     <ScrollView
-      contentContainerStyle={{ paddingBottom: 0 }}
+      contentContainerStyle={{ paddingBottom: 25 }}
       style={{ backgroundColor: theme.background }}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
     >
-      {/* General settings */}
-      {/* <Text style={styles.heading}>General</Text> */}
-
       <View style={[styles.container, { backgroundColor: theme.card }]}>
         <TouchableOpacity
           onPress={() => router.push("/settings-components/location-services")}
         >
           <View style={styles.single_settings_ctn}>
-            {/* <Entypo name="location-pin" size={24} color="black" /> */}
             <Text style={[styles.single_settings, { color: theme.text }]}>
               Location Services
             </Text>
@@ -90,7 +116,7 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      <View  style={[styles.container, { backgroundColor: theme.card }]}>
+      <View style={[styles.container, { backgroundColor: theme.card }]}>
         <TouchableOpacity
           onPress={() => router.push("/settings-components/faqs")}
         >
@@ -114,7 +140,7 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      <View  style={[styles.container, { backgroundColor: theme.card }]}>
+      <View style={[styles.container, { backgroundColor: theme.card }]}>
         <TouchableOpacity
           onPress={() => router.push("/settings-components/privacy-policy")}
         >
@@ -176,7 +202,7 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
 
-      <StatusBar style={isDarkMode? "light" : 'dark'} />
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
     </ScrollView>
   );
 };
@@ -190,14 +216,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
   },
-
   container: {
     backgroundColor: "#fff",
     marginHorizontal: 20,
     borderRadius: 10,
     marginTop: 24,
   },
-
   single_settings_ctn: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -205,38 +229,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 10,
   },
-
   dark_mode_ctn: {
     paddingVertical: 3,
   },
-
   last_single_settings_ctn: {
     borderBottomWidth: 0,
   },
-
   single_settings: {
     fontSize: 16,
   },
-
   switch: {
     transform: [{ scaleX: 1 }, { scaleY: 1 }],
     padding: 0,
     margin: 0,
-  },
-
-  logoutButton: {
-    backgroundColor: "#ff5330",
-    marginTop: 30,
-    paddingVertical: 10,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    columnGap: 10,
-  },
-
-  logoutText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 18,
   },
 });

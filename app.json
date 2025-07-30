@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.galaxies.firebase"
+      "bundleIdentifier": "com.galaxies.firebase",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate you"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,11 +32,14 @@
       "expo-router",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      ["expo-build-properties", {
-        "ios": {
-          "useFrameworks": "static"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
-      }],
+      ],
       [
         "expo-splash-screen",
         {
@@ -42,7 +48,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

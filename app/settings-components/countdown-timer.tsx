@@ -10,10 +10,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTheme } from "..//../themeContext";
+
 
 const timerOptions = ['5 seconds', '10 seconds', '15 seconds', '30 seconds'];
 
 const CountdownTimerScreen = () => {
+        const { isDarkMode, theme } = useTheme();
+  
   const router = useRouter();
   const [selectedTimer, setSelectedTimer] = useState<string | null>('10 seconds');
 
@@ -30,16 +34,16 @@ const CountdownTimerScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
+      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
         <Pressable onPress={router.back} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
-        <Text style={styles.title}>Countdown Timer</Text>
+        <Text  style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Countdown Timer</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.infoText}>
+        <Text   style={[styles.infoText, { color: isDarkMode? '#fff' : '#000' }]}>
           When an alert is triggered, a countdown will begin. If not cancelled in time, it will notify the selected security agencies.
         </Text>
 
@@ -55,7 +59,7 @@ const CountdownTimerScreen = () => {
               color="#ff5330"
               style={{ marginRight: 10 }}
             />
-            <Text style={styles.optionText}>{option}</Text>
+            <Text   style={[styles.optionText, { color: isDarkMode? '#fff' : '#000' }]}>{option}</Text>
           </Pressable>
         ))}
 

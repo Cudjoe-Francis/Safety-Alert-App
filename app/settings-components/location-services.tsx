@@ -12,8 +12,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTheme } from "..//../themeContext";
+
 
 const LocationServicesScreen = () => {
+
+    const { isDarkMode, theme } = useTheme();
+  
   const router = useRouter();
 
   const openLocationSettings = async () => {
@@ -29,16 +34,16 @@ const LocationServicesScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
+      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
         <Pressable onPress={router.back} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
-        <Text style={styles.title}>Location Services</Text>
+        <Text style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Location Services</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.text}>
+        <Text style={[styles.text, { color: isDarkMode? '#fff' : '#000' }]}>
           The Safety Alert App uses your location to:
           {'\n\n'}• Notify security agencies of your exact position
           {'\n'}• Help responders reach you faster
@@ -58,7 +63,7 @@ export default LocationServicesScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    // backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -67,7 +72,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 5,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    // borderColor: '#eee',
   },
   backButton: {
     marginRight: 10,

@@ -36,18 +36,18 @@ const Contacts = () => {
         >
           <View style={styles.ctn}>
             <Foundation name="record" size={25} color="#ff5330" />
-            <Text style={styles.text}>Record audio</Text>
+            <Text style={styles.text}>Recorded Audios</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => push("/(menu-components)/live-location-sharing")}
         >
           <View style={styles.ctn}>
             <Entypo name="location-pin" size={24} color="#ff5330" />
             <Text style={styles.text}>Live Location Sharing</Text>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           onPress={() => push("/(menu-components)/incident-reports")}
@@ -66,6 +66,16 @@ const Contacts = () => {
             <Text style={styles.text}>Select Security Agency</Text>
           </View>
         </TouchableOpacity>
+
+        {/* <TouchableOpacity
+          onPress={() => push("/(menu-components)/security-agencies")}
+        >
+          <View style={styles.ctn}>
+            <MaterialIcons name="report" size={24} color="#ff5330" />
+            <Text style={styles.text}>Activities</Text>
+          </View>
+        </TouchableOpacity> */}
+
       </ScrollView>
       <StatusBar style="light" />
     </SafeAreaView>

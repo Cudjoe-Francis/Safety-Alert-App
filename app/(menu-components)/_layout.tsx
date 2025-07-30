@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 
@@ -10,7 +10,7 @@ const MenuComponents = () => {
         options={{
           title: "Emergency Contacts",
           headerLeft: () => (
-            <Ionicons style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
+            <Ionicons onPress={()=> router.back()} style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
           )
         }}
       />
@@ -28,7 +28,7 @@ const MenuComponents = () => {
         options={{
           title: "Live Location Sharing",
           headerLeft: () => (
-            <Ionicons style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
+            <Ionicons onPress={()=> router.back()}  style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
           )
         }}
       />
@@ -38,7 +38,7 @@ const MenuComponents = () => {
         options={{
           title: "Record Audio",
           headerLeft: () => (
-            <Ionicons style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
+            <Ionicons onPress={()=> router.back()}  style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
           )
         }}
       />

@@ -13,8 +13,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTheme } from "..//../themeContext";
+
 
 const ContactUsScreen = () => {
+        const { isDarkMode, theme } = useTheme();
+  
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,16 +36,16 @@ const ContactUsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView  style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
           <Pressable onPress={router.back} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color="#ff5330" />
           </Pressable>
-          <Text style={styles.title}>Contact Us</Text>
+          <Text style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Contact Us</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
@@ -49,7 +53,8 @@ const ContactUsScreen = () => {
             placeholder="Your Name"
             value={name}
             onChangeText={setName}
-            style={styles.input}
+            style={[styles.input, { color: isDarkMode? '#000' : '#fff' }]}
+            
           />
           <TextInput
             placeholder="Your Email"
@@ -57,7 +62,7 @@ const ContactUsScreen = () => {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
-            style={styles.input}
+            style={[styles.input, { color: isDarkMode? '#000' : '#fff' }]}
           />
           <TextInput
             placeholder="Your Message"
@@ -65,7 +70,7 @@ const ContactUsScreen = () => {
             onChangeText={setMessage}
             multiline
             numberOfLines={5}
-            style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
+            style={[styles.input, { height: 120, textAlignVertical: 'top' }, { color: isDarkMode? '#000' : '#fff' }]}
           />
 
           <Pressable style={styles.button} onPress={handleSubmit}>

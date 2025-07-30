@@ -5,142 +5,371 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Animated,
+  Easing,
+  Platform,
+  Linking,  
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, ReactNode, useRef, useEffect } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Entypo from "@expo/vector-icons/Entypo";
-import { push } from "expo-router/build/global-state/routing";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import UserDetailsModal from "../components/user-details";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StatusBar } from "expo-status-bar";
+import UserDetailsModal from "../components/user-details";
+import * as Location from 'expo-location';
+import { useTheme } from "..//../themeContext";
 
-// delete this import when done with the emergency button
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+type ServiceId = 'hospital' | 'police' | 'fire' | 'campus';
 
-const Home = () => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+interface Service {
+  name: string;
+  id: ServiceId;
+  icon: ReactNode;
+}
 
-  const handleOpenModal = () => {
-    setShowPopup(false);
-    setIsModalVisible(true);
+// interface UserDetailsModalPlaceholderProps {
+//   closeModal: () => void;
+// }
+
+// const UserDetailsModalPlaceholder: React.FC<UserDetailsModalPlaceholderProps> = ({ closeModal }) => (
+//   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+//     <Text style={{ fontSize: 20, marginBottom: 20 }}>User Details</Text>
+//     <TouchableOpacity onPress={closeModal} style={{ padding: 10, backgroundColor: '#ff5330', borderRadius: 5 }}>
+//       <Text style={{ color: '#fff' }}>Close</Text>
+//     </TouchableOpacity>
+//   </View>
+// );
+
+
+const Home: React.FC = () => {
+
+
+  // --- State Definitions with Types ---
+  const [isProfileModalVisible, setIsProfileModalVisible] = useState<boolean>(false);
+  const [showHelpPopup, setShowHelpPopup] = useState<boolean>(false);
+  const [activeService, setActiveService] = useState<ServiceId | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
+  const [isSosActive, setIsSosActive] = useState<boolean>(false);
+  // State to store the user's current location
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  // State to store any error messages related to location
+  const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
+
+      const { isDarkMode, toggleTheme, theme } = useTheme();
+
+  // Animated value for SOS pulse animation
+  const sosPulse = useRef(new Animated.Value(1)).current;
+  // Ref to store the animation instance
+  const sosAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  // --- useEffect for Location Permission and Fetching ---
+  useEffect(() => {
+    (async () => {
+      // Request foreground location permissions
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationErrorMsg('Permission to access location was denied. Cannot find nearby places.');
+        console.error('Location permission denied.');
+        return;
+      }
+
+      // Get the current position
+      try {
+        let location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+        console.log("User Location fetched:", location.coords);
+      } catch (error) {
+        setLocationErrorMsg('Could not get current location. Please ensure GPS is enabled.');
+        console.error('Error getting location:', error);
+      }
+    })();
+  }, []); // Empty dependency array means this effect runs once on mount
+
+  const handleOpenProfileModal = (): void => {
+    setShowHelpPopup(false); // Close help popup if open
+    setIsProfileModalVisible(true);
   };
+
+  // --- Functions for Service Button Logic with Types ---
+
+  const handleServicePress = (serviceName: ServiceId): void => {
+    if (!activeService) {
+      setActiveService(serviceName);
+      console.log(`${serviceName} service activated.`);
+    }
+  };
+
+  const handleOpenCancelModal = (): void => {
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = (): void => {
+    console.log(`${activeService} service cancelled.`);
+    setActiveService(null);
+    setShowCancelModal(false);
+  };
+
+  const handleCloseCancelModal = (): void => {
+    setShowCancelModal(false);
+  };
+  
+  const handleSosPress = (): void => {
+    
+
+    setIsSosActive(true);
+    console.log("SOS button pressed! Notifying contacts...");
+
+    // Start SOS pulse animation and store the animation instance
+    sosAnimationRef.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sosPulse, {
+          toValue: 1.2,
+          duration: 400,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sosPulse, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    sosAnimationRef.current.start(); // Start the animation
+
+    // Simulate sending notification and stop animation after a delay
+    setTimeout(() => {
+      if (sosAnimationRef.current) {
+        sosAnimationRef.current.stop(); // Stop the animation using the stored ref
+      }
+      sosPulse.setValue(1); // Reset scale
+      setIsSosActive(false);
+      console.log("Contacts notified successfully.");
+    }, 3000);
+  };
+
+  /**
+   * Opens the device's default map application with a search query.
+   * Prioritizes Google Maps if installed, otherwise falls back to default maps.
+   * @param query The search term (e.g., "police station", "hospital").
+   */
+  const openMapsForQuery = async (query: string): Promise<void> => {
+    const encodedQuery = encodeURIComponent(query);
+    let url: string = '';
+
+    if (Platform.OS === 'ios') {
+      // Try to open Google Maps first on iOS
+      const googleMapsUrl = userLocation
+        ? `comgooglemaps://?q=${encodedQuery}&center=${userLocation.latitude},${userLocation.longitude}`
+        : `comgooglemaps://?q=${encodedQuery}`;
+
+      const canOpenGoogleMaps = await Linking.canOpenURL(googleMapsUrl);
+
+      if (canOpenGoogleMaps) {
+        url = googleMapsUrl;
+      } else {
+        // Fallback to Apple Maps if Google Maps is not installed
+        url = userLocation
+          ? `http://maps.apple.com/?ll=${userLocation.latitude},${userLocation.longitude}&q=${encodedQuery}`
+          : `http://maps.apple.com/?q=${encodedQuery}`;
+        console.log('Google Maps not installed on iOS, falling back to Apple Maps.');
+      }
+    } else {
+      // Android: Google Maps via geo URI (typically defaults to Google Maps)
+      url = userLocation
+        ? `geo:${userLocation.latitude},${userLocation.longitude}?q=${encodedQuery}`
+        : `geo:0,0?q=${encodedQuery}`;
+    }
+
+    // Attempt to open the URL
+    Linking.openURL(url).catch((err) => {
+      console.error('An error occurred trying to open maps:', err);
+      // You could add a user-facing message here, e.g., using a custom modal or toast
+      // For example: Alert.alert('Error', 'Could not open map application. Please ensure you have a map app installed.');
+    });
+  };
+
+
+  // --- Service Button Data with Type ---
+  const services: Service[] = [
+    { name: 'Hospital', id: 'hospital', icon: <FontAwesome5 name="hospital-alt" size={40} color="#008000" /> },
+    { name: 'Police', id: 'police', icon: <MaterialIcons name="security" size={40} color="#121a68" /> },
+    { name: 'Fire Service', id: 'fire', icon: <MaterialIcons name="local-fire-department" size={40} color="red" /> },
+    { name: 'Campus Watch', id: 'campus', icon: <MaterialIcons name="security" size={40} color="#5d3fd3" /> },
+  ];
+
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.mainContainer}>
-        <Pressable onPress={() => setShowPopup(false)} style={{ flex: 1 }}>
-          {/* Top view */}
-          <View style={styles.topContainer}>
-            {/* see profile and find help */}
-            <View style={styles.profile_location_help_ctn}>
-              {/* see profile */}
-              <View
-                style={{
-                  alignItems: "center",
-                  flexDirection: "row",
-                  columnGap: 6,
-                }}
-              >
-                {/* profile icon here */}
-
-                <FontAwesome5 name="user-circle" size={28} color="#ff5330" />
-
-                <View style={{ alignItems: "center" }}>
-                  <Text style={styles.profile_name}>Hello Deep</Text>
-                  <TouchableOpacity onPress={handleOpenModal}>
-                    <Text style={styles.see_profile}>See Profile</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Modal Screen */}
-              <Modal
-                visible={isModalVisible}
-                onRequestClose={() => setIsModalVisible(false)}
-                animationType="slide"
-                presentationStyle="pageSheet"
-              >
-                <UserDetailsModal closeModal={() => setIsModalVisible(false)} />
-              </Modal>
-
-              {/* find help */}
-              <View style={styles.find_help_ctn}>
-                <TouchableOpacity
-                  style={{ flexDirection: "row" }}
-                  onPress={() => setShowPopup((prev) => !prev)}
-                >
-                  <View style={{ width: 70 }}>
-                    <Text style={styles.find_help_text}>Find Help nearby</Text>
-                  </View>
-                  <Entypo name="location-pin" size={32} color="#ff5330" />
+      <SafeAreaView style={[styles.mainContainer, { backgroundColor: isDarkMode? '#121212' : '#f5f5f5' } ]}>
+        {/* Pressable to close the help popup when tapping outside */}
+        <Pressable onPress={() => setShowHelpPopup(false)} style={{ flex: 1 }}>
+          {/* Top Bar: Profile and Find Help */}
+          <View style={styles.profile_location_help_ctn}>
+            {/* Profile Section */}
+            <View style={styles.profileContainer}>
+              <FontAwesome5 name="user-circle" size={28} color="#ff5330" />
+              <View>
+                <Text style={styles.profile_name}>Hello Deep</Text>
+                <TouchableOpacity onPress={handleOpenProfileModal}>
+                  <Text style={styles.see_profile}>See Profile</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Find Help Nearby Popup */}
-            {showPopup && (
-              <Pressable style={styles.absoluteFill}>
-                <View style={styles.popupContainer}>
-                  <Pressable style={styles.popup}>
-                    <TouchableOpacity style={styles.option}>
-                      <MaterialIcons
-                        name="security"
-                        size={24}
-                        color="#ff4330"
-                      />
-                      <Text style={styles.popupText}>Police Station</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.option}>
-                      <FontAwesome5
-                        name="hospital-alt"
-                        size={20}
-                        color="#ff5330"
-                      />
-                      <Text style={styles.popupText}>Hospitals</Text>
-                    </TouchableOpacity>
-                  </Pressable>
+            {/* Find Help Section */}
+            <View style={styles.find_help_ctn}>
+              <TouchableOpacity
+                style={{ flexDirection: "row", alignItems: 'center' }}
+                onPress={() => setShowHelpPopup((prev) => !prev)} // Toggle help popup visibility
+              >
+                <View style={{ width: 70 }}>
+                  <Text style={styles.find_help_text}>Find Help nearby</Text>
                 </View>
-              </Pressable>
-            )}
-
-            {/* emergency and help */}
-            <View style={styles.emergency_help_ctn}>
-              <Text style={styles.emergency_help_text}>
-                Emergency help needed?
-              </Text>
-
-              <Text style={styles.just_press_btn_text}>
-                Just press the button
-              </Text>
+                <Entypo name="location-pin" size={32} color="#ff5330" />
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Middle button view */}
+          {/* Profile Details Modal */}
+          <Modal
+            visible={isProfileModalVisible}
+            onRequestClose={() => setIsProfileModalVisible(false)}
+            animationType="slide"
+            presentationStyle="pageSheet"
+          >
+            {/* Using the actual UserDetailsModal component here */}
+            <UserDetailsModal closeModal={() => setIsProfileModalVisible(false)} />
+          </Modal>
+
+          {/* Find Help Nearby Popup */}
+          {showHelpPopup && (
+            <View style={styles.popupAbsoluteContainer}>
+              <View style={styles.popup}>
+                {/* Police Station option - opens map with police station search */}
+                <TouchableOpacity
+                  style={styles.option}
+                  onPress={() => {
+                    setShowHelpPopup(false); // Close popup after selection
+                    openMapsForQuery('police station'); // Open maps for police stations
+                  }}
+                >
+                  <MaterialIcons name="security" size={24} color="#ff4330" />
+                  <Text style={styles.popupText}>Police Station</Text>
+                </TouchableOpacity>
+                {/* Hospitals option - opens map with hospital search */}
+                <TouchableOpacity
+                  style={styles.option}
+                  onPress={() => {
+                    setShowHelpPopup(false); // Close popup after selection
+                    openMapsForQuery('hospital'); // Open maps for hospitals
+                  }}
+                >
+                  <FontAwesome5 name="hospital-alt" size={20} color="#ff5330" />
+                  <Text style={styles.popupText}>Hospitals</Text>
+                </TouchableOpacity>
+                {/* Display location error if any */}
+                {locationErrorMsg && (
+                    <Text style={styles.locationErrorText}>{locationErrorMsg}</Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Emergency Assistance Section */}
+          <Text style={[styles.emergency_help_text, { color: isDarkMode? '#fff' : '#000' }]}>Emergency Assistance</Text>
+
+          {/* Middle Buttons View for emergency services */}
           <View style={styles.middleContainer}>
-            {/* Middle emergency button here - change the text to btn */}
-            <TouchableOpacity
-              style={styles.emergency_btn}
-              // onPress={() => alert("Emergency button pressed!")}
-            >
-              <FontAwesome name="dot-circle-o" size={220} color="#ff5330" />
-            </TouchableOpacity>
+            {services.map((service) => {
+              const isThisServiceActive = activeService === service.id;
+              const isAnyServiceActive = activeService !== null;
+              // Disable other buttons if one service is active
+              const isDisabled = isAnyServiceActive && !isThisServiceActive;
+
+              return (
+                <TouchableOpacity
+                  key={service.id}
+                  style={[
+                    styles.assistanceBtn,
+                    isDisabled && styles.disabledBtn,
+                    // { backgroundColor: isDarkMode? '#f4f4f4' : theme.background }
+                  ]}
+                  onPress={() => handleServicePress(service.id)}
+                  disabled={isAnyServiceActive} // Disable if any service is already active
+                >
+                  {service.icon}
+                  <Text style={styles.assistanceBtnText}>{service.name}</Text>
+
+                  {/* Cancel button appears if this service is active */}
+                  {isThisServiceActive && (
+                    <TouchableOpacity
+                      style={styles.cancelBtn}
+                      onPress={handleOpenCancelModal}
+                    >
+                      <MaterialIcons name="cancel" size={28} color="#fff" />
+                      <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
-          {/* Bottom button  view */}
-          <View style={styles.bottomContainer}>
-            <Text style={styles.unsafe_text}>Feeling Unsafe?</Text>
-            <TouchableOpacity
-              style={styles.alone_btn}
-              onPress={() => push("/components/alone")}
-            >
-              <Text style={styles.alone_btn_text}>I`m Alone</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Alert Text and SOS Button */}
+          <Text style={[styles.alertText, { color: isDarkMode? '#bfc1c4' : 'grey' }]}>
+            Alert your contacts, You are in danger
+          </Text>
+
+          <TouchableOpacity
+            style={styles.sosContainer}
+            onPress={handleSosPress}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={[{ transform: [{ scale: sosPulse }] }]}>
+              <MaterialIcons name="sos" size={36} color="#fff" />
+            </Animated.View>
+          </TouchableOpacity>
+          {isSosActive && <Text style={styles.notifyingText}>Alerting your contacts...</Text>}
         </Pressable>
 
-        <StatusBar style="dark" />
+        {/* --- Cancellation Confirmation Modal --- */}
+        <Modal
+          visible={showCancelModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={handleCloseCancelModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirm Cancellation</Text>
+              <Text style={styles.modalMessage}>
+                Are you sure you want to cancel the `{activeService}`` request?
+              </Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={handleCloseCancelModal}
+                >
+                  <Text style={styles.modalButtonText}>Go Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleConfirmCancel}
+                >
+                  <Text style={styles.modalButtonText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <StatusBar style={isDarkMode? 'light' : "dark"} />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -149,63 +378,36 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
-  absoluteFill: {
-    position: "absolute",
-    top: 40,
-    right: 20,
-    zIndex: 10,
-    borderRadius: 8,
-  },
-  popupContainer: {
-    borderRadius: 8,
-  },
-  popup: {
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 8,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  option: {
-    paddingVertical: 8,
-    flexDirection: "row",
-    columnGap: 12,
-    alignItems: "center",
-    paddingRight: 14,
-    paddingLeft: 6,
-  },
-
-  popupText: {
-    fontSize: 17,
-  },
-
   mainContainer: {
     flex: 1,
-  },
-
-  topContainer: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    justifyContent: "space-between",
   },
 
   profile_location_help_ctn: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+
+  profileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 10,
   },
 
   profile_name: {
-    color: "#636363",
+    color: "#555",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "bold",
   },
 
   see_profile: {
     color: "#ff5330",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "500",
   },
 
@@ -221,58 +423,203 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  emergency_help_ctn: {
+  popupAbsoluteContainer: {
+    position: "absolute",
+    top: 65,
+    right: 20,
+    zIndex: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 5,
+    elevation: 10,
+  },
+
+  popup: {
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 8,
+  },
+
+  option: {
+    paddingVertical: 10,
+    flexDirection: "row",
+    columnGap: 12,
     alignItems: "center",
-    justifyContent: "center",
-    rowGap: 2,
+    paddingHorizontal: 10,
+  },
+
+  popupText: {
+    fontSize: 17,
+    color: '#333',
+  },
+
+  locationErrorText: {
+    fontSize: 12,
+    color: 'red',
+    marginTop: 5,
+    paddingHorizontal: 10,
+    textAlign: 'center',
   },
 
   emergency_help_text: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: "bold",
-    width: 200,
     textAlign: "center",
-  },
-
-  just_press_btn_text: {
-    color: "#636363",
-    fontSize: 15,
-    textAlign: "center",
+    paddingTop: 40,
+    paddingBottom: 20,
+    // color: '#111'
   },
 
   middleContainer: {
-    flex: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
+    rowGap: 30,
+    columnGap: 30,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+
+  assistanceBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    paddingVertical: 20,
     alignItems: "center",
+    justifyContent: 'center',
+    width: 140,
+    height: 140,
+    rowGap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 5,
+    position: 'relative',
+    overflow: 'hidden',
   },
 
-  emergency_btn: {
-    alignItems: "center",
-  },
-
-  bottomContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingBottom: 50,
-  },
-
-  unsafe_text: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-
-  alone_btn: {
-    paddingVertical: 14,
-    paddingHorizontal: 42,
-    backgroundColor: "#ff5330",
-    borderRadius: 12,
-    marginTop: 12,
-  },
-
-  alone_btn_text: {
+  assistanceBtnText: {
+    color: "#333",
     fontSize: 16,
-    fontWeight: "700",
-    color: "#fff",
+    fontWeight: '600',
   },
+
+  alertText: {
+    textAlign: "center",
+    marginTop: 30,
+    fontSize: 16,
+    color: "grey",
+  },
+
+  sosContainer: {
+    backgroundColor: "#ff5330",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    height: 80,
+    alignSelf: "center",
+    borderRadius: 40,
+    marginTop: 15,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+  },
+
+  disabledBtn: {
+    opacity: 0.4,
+    backgroundColor: '#e0e0e0',
+  },
+
+  cancelBtn: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+    zIndex: 5,
+  },
+
+  cancelBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginTop: 4,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+  },
+
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 25,
+    color: '#555',
+    lineHeight: 22,
+  },
+
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+
+  modalButtonCancel: {
+    backgroundColor: '#6c757d',
+  },
+
+  modalButtonConfirm: {
+    backgroundColor: '#ff5330',
+  },
+
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  notifyingText: {
+    textAlign: 'center',
+    marginTop: 10,
+    fontSize: 14,
+    color: '#ff5330',
+    fontWeight: 'bold',
+  }
 });

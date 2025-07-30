@@ -3,8 +3,13 @@ import { StyleSheet, Text, View, ScrollView, Pressable, Linking } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTheme } from "..//../themeContext";
+
 
 const DeveloperInfoScreen = () => {
+
+      const { isDarkMode, theme } = useTheme();
+  
   const router = useRouter();
 
   const handleEmail = () => {
@@ -12,16 +17,16 @@ const DeveloperInfoScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
+      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
         <Pressable onPress={router.back} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#ff5530" />
         </Pressable>
-        <Text style={styles.title}>Developer Info</Text>
+        <Text style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Developer Info</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.text}>
+        <Text style={[styles.text, { color: isDarkMode? '#fff' : '#000' }]}>
           This app was developed by:
           {'\n\n'}👨‍💻 Name: Francis Cudjoe{'\n'}
           📧 Email: developer@example.com{'\n'}

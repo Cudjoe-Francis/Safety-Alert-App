@@ -6,22 +6,28 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Text, TouchableOpacity } from "react-native";
 
+import { useTheme } from "..//../themeContext";
+
 const TabsLayout = () => {
+  const { isDarkMode } = useTheme();
+
   return (
     <>
       <StatusBar style="dark" />
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: "#ff5330",
-          tabBarInactiveTintColor: "#000",
-          tabBarShowLabel: false,
+          tabBarInactiveTintColor: isDarkMode ? "#fff" : "#000",
+          tabBarShowLabel: true,
           headerShown: false,
           tabBarStyle: {
-            paddingTop: 7,
-            // borderTopLeftRadius: 30,
-            // borderTopRightRadius: 30,
+            paddingTop: 5,
             borderWidth: 1,
-            borderColor: "#dbdbdb",
+            borderTopColor: isDarkMode ? "#363636" : "#ddd",
+            borderBottomColor: isDarkMode ? "#000" : "#fff",
+            borderRightColor: isDarkMode ? "#000" : "#fff",
+            borderLeftColor: isDarkMode ? "#000" : "#fff",
+            backgroundColor: isDarkMode ? "#121212" : "#fff",
           },
         }}
         initialRouteName="index"
@@ -48,29 +54,28 @@ const TabsLayout = () => {
           }}
         />
 
-        {/* <Tabs.Screen
-          name="chatbot"
-          options={{
-             title: 'ChatBot',
-            headerShown: true,
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="chatbox-ellipses" size={24} color={color} />
-            ),
-          }}
-        /> */}
-
         <Tabs.Screen
           name="settings"
           options={{
             title: "Settings",
             headerShown: true,
+            headerStyle: {
+              backgroundColor: isDarkMode? "#121212" : "#fff",
+            },
+            headerTintColor: isDarkMode ? "#fff" : "#000",
             tabBarIcon: ({ color }) => (
               <MaterialIcons name="settings" size={24} color={color} />
             ),
             headerRight: () => (
-              <TouchableOpacity onPress={() => replace('/(auth)/signin')} style={{ paddingRight: 18, borderRadius: 10, padding: 6 }}>
-                <Text style={{ fontSize: 16, color: '#ff5330', fontWeight: 'bold' }}>Log out</Text>
-                {/* <SimpleLineIcons name="logout" size={24} color="black" /> */}
+              <TouchableOpacity
+                onPress={() => replace("/(auth)/signin")}
+                style={{ paddingRight: 18, borderRadius: 10, padding: 6 }}
+              >
+                <Text
+                  style={{ fontSize: 16, color: "#ff5330", fontWeight: "bold" }}
+                >
+                  Log out
+                </Text>
               </TouchableOpacity>
             ),
           }}

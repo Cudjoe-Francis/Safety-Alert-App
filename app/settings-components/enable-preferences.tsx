@@ -9,8 +9,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTheme } from "..//../themeContext";
+
 
 const EnablePreferencesScreen = () => {
+
+        const { isDarkMode, theme } = useTheme();
+  
   const router = useRouter();
 
   const [preferences, setPreferences] = useState({
@@ -28,18 +33,18 @@ const EnablePreferencesScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
+      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
         <Pressable onPress={router.back} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
-        <Text style={styles.title}>Enable Preferences</Text>
+        <Text style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Enable Preferences</Text>
       </View>
 
       <View style={styles.inner}>
         {Object.entries(preferences).map(([key, value]) => (
           <View style={styles.preferenceItem} key={key}>
-            <Text style={styles.label}>{getLabelText(key)}</Text>
+            <Text style={[styles.label, { color: isDarkMode? '#fff' : '#000' }]}>{getLabelText(key)}</Text>
             <Switch
               value={value}
               onValueChange={() => togglePreference(key as keyof typeof preferences)}

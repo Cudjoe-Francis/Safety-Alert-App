@@ -3,42 +3,47 @@ import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTheme } from "..//../themeContext";
+
 
 const FAQsScreen = () => {
+
+        const { isDarkMode, theme } = useTheme();
+  
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
+      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
         <Pressable onPress={router.back} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#ff5330" />
         </Pressable>
-        <Text style={styles.title}>FAQs</Text>
+        <Text style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>FAQs</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.q}>1. How does the app work?</Text>
-        <Text style={styles.a}>
+        <Text style={[styles.q, { color: isDarkMode? '#fff' : '#000' }]}>1. How does the app work?</Text>
+        <Text style={[styles.a, { color: isDarkMode? '#fff' : '#000' }]}>
           The app sends alerts to selected security agencies with your live location.
         </Text>
 
-        <Text style={styles.q}>2. Is my location tracked all the time?</Text>
-        <Text style={styles.a}>
+        <Text style={[styles.q, { color: isDarkMode? '#fff' : '#000' }]}>2. Is my location tracked all the time?</Text>
+        <Text style={[styles.a, { color: isDarkMode? '#fff' : '#000' }]}>
           No. Location is only used during an active alert and not stored.
         </Text>
 
-        <Text style={styles.q}>3. Can I choose which agencies get my alerts?</Text>
-        <Text style={styles.a}>
+        <Text style={[styles.q, { color: isDarkMode? '#fff' : '#000' }]}>3. Can I choose which agencies get my alerts?</Text>
+        <Text style={[styles.a, { color: isDarkMode? '#fff' : '#000' }]}>
           Yes. You can select preferred security agencies from the settings.
         </Text>
 
-        <Text style={styles.q}>4. Does the app work offline?</Text>
-        <Text style={styles.a}>
+        <Text style={[styles.q, { color: isDarkMode? '#fff' : '#000' }]}>4. Does the app work offline?</Text>
+        <Text style={[styles.a, { color: isDarkMode? '#fff' : '#000' }]}>
           Some features may not work without internet, especially sending alerts.
         </Text>
 
-        <Text style={styles.q}>5. Is the app free?</Text>
-        <Text style={styles.a}>
+        <Text style={[styles.q, { color: isDarkMode? '#fff' : '#000' }]}>5. Is the app free?</Text>
+        <Text style={[styles.a, { color: isDarkMode? '#fff' : '#000' }]}>
           Yes, the app is free to use. Some future features may be paid.
         </Text>
       </ScrollView>

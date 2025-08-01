@@ -1,25 +1,25 @@
+import Entypo from "@expo/vector-icons/Entypo";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as Location from "expo-location";
+import { StatusBar } from "expo-status-bar";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
+  Linking,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Animated,
-  Easing,
-  Platform,
-  Linking,
 } from "react-native";
-import React, { useState, ReactNode, useRef, useEffect } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import Entypo from "@expo/vector-icons/Entypo";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { StatusBar } from "expo-status-bar";
-import UserDetailsModal from "../components/user-details";
-import * as Location from "expo-location";
 import { useTheme } from "..//../themeContext";
-// import { LinearGradient } from "expo-linear-gradient";
+import UserDetailsModal from "../components/user-details";
+import { useNotification } from "../context/NotificationContext"; // Adjust path if needed
 
 type ServiceId = "hospital" | "police" | "fire" | "campus";
 
@@ -36,7 +36,7 @@ const Home: React.FC = () => {
   const [showHelpPopup, setShowHelpPopup] = useState<boolean>(false);
   const [activeService, setActiveService] = useState<ServiceId | null>(null);
   const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
-  const [isSosActive, setIsSosActive] = useState<boolean>(false);
+  const [isSosActive, setIsSosActive] = useState<boolean>(false); ///////////////////////////////////////////////////////
   // State to store the user's current location
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
@@ -45,66 +45,51 @@ const Home: React.FC = () => {
   // State to store any error messages related to location
   const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
 
-  const { isDarkMode, toggleTheme, theme } = useTheme();
+  const { isDarkMode } = useTheme();
+  const { addNotification } = useNotification();
 
+  // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Animated value for SOS pulse animation
   const sosPulse = useRef(new Animated.Value(1)).current;
   const sosAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+  // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const animatedBorderColor = useRef(new Animated.Value(0)).current;
-const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+  const animatedBorderColor = useRef(new Animated.Value(0)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
-const interpolateBorderColor = animatedBorderColor.interpolate({
-  inputRange: [0, 0.25, 0.5, 0.75, 1],
-  outputRange: [
-    "rgb(255,0,0)",
-    "rgb(0,255,0)",
-    "rgb(0,0,255)",
-    "rgb(255,255,0)",
-    "rgb(255,0,0)",
-  ],
-});
+  const interpolateBorderColor = animatedBorderColor.interpolate({
+    inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1],
+    outputRange: [
+      "rgb(255,0,0)",
+      "rgb(0,255,0)",
+      "rgb(0,0,255)",
+      "rgb(255,255,0)",
+      "rgb(255,0,0)",
+      "rgb(255,255,255)",
+    ],
+  });
 
-useEffect(() => {
-  if (isDarkMode) {
-    // Start RGB animation when dark mode is on
-    animationRef.current = Animated.loop(
-      Animated.timing(animatedBorderColor, {
-        toValue: 1,
-        duration: 10000,
-        easing: Easing.linear,
-        useNativeDriver: false,
-      })
-    );
-    animationRef.current.start();
-  } else {
-    // Reset animation when dark mode is off
-    if (animationRef.current) {
-      animationRef.current.stop();
-      animationRef.current = null;
+  useEffect(() => {
+    if (isDarkMode) {
+      // Start RGB animation when dark mode is on
+      animationRef.current = Animated.loop(
+        Animated.timing(animatedBorderColor, {
+          toValue: 1,
+          duration: 10000,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        })
+      );
+      animationRef.current.start();
+    } else {
+      // Reset animation when dark mode is off
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+      animatedBorderColor.setValue(0); // Reset color to initial
     }
-    animatedBorderColor.setValue(0); // Reset color to initial
-  }
-}, [isDarkMode]);
-
-
-
-
-
-  /////////////////////////////////////////////////////////////////////////////////
-
-  
-
-  // const interpolateBorderColor = animatedBorderColor.interpolate({
-  //   inputRange: [0, 0.25, 0.5, 0.75, 1],
-  //   outputRange: [
-  //     "rgb(255,0,0)",
-  //     "rgb(0,255,0)",
-  //     "rgb(0,0,255)",
-  //     "rgb(255,255,0)",
-  //     "rgb(255,0,0)",
-  //   ],
-  // });
+  }, [isDarkMode, animatedBorderColor]);
 
   // --- useEffect for Location Permission and Fetching ---
   useEffect(() => {
@@ -163,9 +148,10 @@ useEffect(() => {
     setShowCancelModal(false);
   };
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   const handleSosPress = (): void => {
     setIsSosActive(true);
-    console.log("SOS button pressed! Notifying contacts...");
+    addNotification("SOS activated! Alerting your emergency contacts..."); // <-- Add this line
 
     // Start SOS pulse animation and store the animation instance
     sosAnimationRef.current = Animated.loop(
@@ -196,6 +182,7 @@ useEffect(() => {
       console.log("Contacts notified successfully.");
     }, 3000);
   };
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /**
    * Opens the device's default map application with a search query.
@@ -236,7 +223,6 @@ useEffect(() => {
     Linking.openURL(url).catch((err) => {
       console.error("An error occurred trying to open maps:", err);
       // You could add a user-facing message here, e.g., using a custom modal or toast
-      // For example: Alert.alert('Error', 'Could not open map application. Please ensure you have a map app installed.');
     });
   };
 
@@ -430,28 +416,35 @@ useEffect(() => {
             })}
           </View>
 
-          {/* Alert Text and SOS Button */}
-          <Text
-            style={[
-              styles.alertText,
-              { color: isDarkMode ? "#bfc1c4" : "grey" },
-            ]}
-          >
-            Alert your contacts, You are in danger
-          </Text>
+          <View style={styles.bottomContainer}>
+            {/* Alert Text and SOS Button */}
+            <Text
+              style={[
+                styles.alertText,
+                { color: isDarkMode ? "#bfc1c4" : "grey" },
+              ]}
+            >
+              Alert your contacts, You are in danger
+            </Text>
 
-          <TouchableOpacity
-            style={styles.sosContainer}
-            onPress={handleSosPress}
-            activeOpacity={0.8}
-          >
-            <Animated.View style={[{ transform: [{ scale: sosPulse }] }]}>
-              <MaterialIcons name="sos" size={36} color="#fff" />
-            </Animated.View>
-          </TouchableOpacity>
-          {isSosActive && (
-            <Text style={styles.notifyingText}>Alerting your contacts...</Text>
-          )}
+            {/* ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
+            <TouchableOpacity
+              style={styles.sosContainer}
+              onPress={handleSosPress}
+              activeOpacity={0.8}
+            >
+              <Animated.View style={[{ transform: [{ scale: sosPulse }] }]}>
+                <MaterialIcons name="sos" size={36} color="#fff" />
+              </Animated.View>
+            </TouchableOpacity>
+
+            {isSosActive && (
+              <Text style={styles.notifyingText}>
+                Alerting your contacts...
+              </Text>
+            )}
+            {/* ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
+          </View>
         </Pressable>
 
         {/* --- Cancellation Confirmation Modal --- */}
@@ -504,6 +497,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 15,
+    marginBottom: 10,
+    // backgroundColor: 'red',
   },
 
   profileContainer: {
@@ -537,7 +532,7 @@ const styles = StyleSheet.create({
 
   popupAbsoluteContainer: {
     position: "absolute",
-    top: 65,
+    top: 50,
     right: 20,
     zIndex: 10,
     borderRadius: 8,
@@ -579,8 +574,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: 35,
+    paddingBottom: 25,
   },
 
   middleContainer: {
@@ -591,6 +586,13 @@ const styles = StyleSheet.create({
     columnGap: 30,
     paddingVertical: 20,
     paddingHorizontal: 20,
+    // backgroundColor: "pink", /////////////////////////////////////////////////////////////
+  },
+
+  bottomContainer: {
+    // backgroundColor: 'blue',
+    flex: 1,
+    justifyContent: "center",
   },
 
   assistanceBtn: {
@@ -649,7 +651,6 @@ const styles = StyleSheet.create({
 
   alertText: {
     textAlign: "center",
-    marginTop: 30,
     fontSize: 16,
     color: "grey",
   },

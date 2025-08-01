@@ -1,60 +1,139 @@
+import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
+  FlatList,
+  SafeAreaView,
   StyleSheet,
   Text,
   View,
-  ScrollView,
-  Pressable,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import { useNotification } from "../context/NotificationContext"; // <-- Add this import
 
-const Notifications = () => {
-  const router = useRouter();
+type NotificationItem = {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+};
+
+const NotificationScreen = () => {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { notifications: appNotifications } = useNotification(); // <-- Get in-app notifications
+
+  useEffect(() => {
+    animateIn();
+
+    // Listener for received push notifications
+    const subscriptionReceived = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        const newNotification: NotificationItem = {
+          id: notification.request.identifier,
+          title: notification.request.content.title || "Security Alert",
+          message:
+            notification.request.content.body || "Message from responder.",
+          timestamp: new Date().toLocaleString(),
+        };
+
+        setNotifications((prev) => [newNotification, ...prev]);
+      }
+    );
+
+    return () => {
+      subscriptionReceived.remove();
+    };
+  }, []);
+
+  // Combine push notifications and app notifications
+  const allNotifications = [
+    ...appNotifications.map((n) => ({
+      id: n.id.toString(),
+      title: "App Alert",
+      message: n.message,
+      timestamp: n.timestamp.toLocaleString(),
+    })),
+    ...notifications,
+  ];
+
+  const animateIn = () => {
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.out(Easing.exp),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const renderNotification = ({ item }: { item: NotificationItem }) => (
+    <View style={styles.notificationItem}>
+      <Text style={styles.notificationTitle}>{item.title}</Text>
+      <Text style={styles.notificationMessage}>{item.message}</Text>
+      <Text style={styles.notificationTimestamp}>{item.timestamp}</Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#ff5330" />
-        </Pressable>
-        <Text style={styles.title}>Notifications</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text>Notifications</Text>
-      </ScrollView>
+      {allNotifications.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="notifications-off" size={64} color="#ccc" />
+          <Text style={styles.emptyText}>No notifications yet</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={allNotifications}
+          renderItem={renderNotification}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
     </SafeAreaView>
   );
 };
 
-export default Notifications;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  content: {
-    // padding: 20,
+    backgroundColor: "#fff",
   },
 
+  headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    marginTop: 10,
+    color: "#aaa",
+  },
+  listContent: {
+    padding: 10,
+  },
+  notificationItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  notificationTitle: {
+    fontWeight: "bold",
+  },
+  notificationMessage: {
+    marginTop: 5,
+    color: "#333",
+  },
+  notificationTimestamp: {
+    marginTop: 5,
+    fontSize: 12,
+    color: "#aaa",
+  },
 });
+
+export default NotificationScreen;

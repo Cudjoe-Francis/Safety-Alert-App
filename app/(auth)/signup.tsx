@@ -8,12 +8,12 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  ScrollView, // Import ScrollView
 } from "react-native";
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { replace } from "expo-router/build/global-state/routing";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getDatabase, ref, set } from "firebase/database";
 
 const SignUp = () => {
   // State variables for form fields
@@ -30,13 +30,6 @@ const SignUp = () => {
   const [passwordError, setPasswordError] = useState<string>("");
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>("");
 
-  /**
-   * Validates a generic text input (e.g., first name, last name).
-   * @param value The string value to validate.
-   * @param fieldName The name of the field for error messages.
-   * @param setError The state setter for the error message.
-   * @returns True if the value is valid, false otherwise.
-   */
   const validateTextInput = (
     value: string,
     fieldName: string,
@@ -50,11 +43,6 @@ const SignUp = () => {
     return true;
   };
 
-  /**
-   * Validates the email format.
-   * @param email The email string to validate.
-   * @returns True if the email is valid, false otherwise.
-   */
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
@@ -68,11 +56,6 @@ const SignUp = () => {
     return true;
   };
 
-  /**
-   * Validates the password.
-   * @param password The password string to validate.
-   * @returns True if the password is valid, false otherwise.
-   */
   const validatePassword = (password: string): boolean => {
     if (!password) {
       setPasswordError("Password is required.");
@@ -85,12 +68,6 @@ const SignUp = () => {
     return true;
   };
 
-  /**
-   * Validates the confirm password field.
-   * @param confirmPass The confirm password string to validate.
-   * @param originalPass The original password string for comparison.
-   * @returns True if the confirm password is valid and matches, false otherwise.
-   */
   const validateConfirmPassword = (
     confirmPass: string,
     originalPass: string
@@ -106,11 +83,10 @@ const SignUp = () => {
     return true;
   };
 
-  /**
-   * Handles the sign-up button press, performing all validations.
-   */
-  const handleSignUp = () => {
-    // Perform all validations
+  const auth = getAuth();
+  const db = getDatabase();
+
+  const handleSignUp = async () => {
     const isFirstNameValid = validateTextInput(
       firstName,
       "First Name",
@@ -128,7 +104,6 @@ const SignUp = () => {
       password
     );
 
-    // If all fields are valid, proceed with sign-up logic
     if (
       isFirstNameValid &&
       isLastNameValid &&
@@ -136,146 +111,148 @@ const SignUp = () => {
       isPasswordValid &&
       isConfirmPasswordValid
     ) {
-      console.log("Sign Up successful:", {
-        firstName,
-        lastName,
-        email,
-        password,
-      });
-      // In a real app, you would dispatch an action or make an API call here.
-      replace("/(tabs)"); // Navigate to the home screen
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        const user = userCredential.user;
+
+        await set(ref(db, `users/${user.uid}`), {
+          uid: user.uid,
+          firstName,
+          lastName,
+          email,
+          createdAt: new Date().toISOString(),
+        });
+
+        replace("/(tabs)");
+      } catch (error: any) {
+        console.error("Signup failed:", error.message);
+        setEmailError("Signup failed. " + error.message);
+      }
     } else {
       console.log("Validation failed.");
     }
   };
 
   return (
-    // Wrap the entire content with TouchableWithoutFeedback to dismiss keyboard on tap
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <SafeAreaView style={styles.mainContainer}>
-        {/* KeyboardAvoidingView to adjust layout when keyboard appears */}
+      <View style={styles.mainContainer}>
+        <View style={styles.createAcc}>
+          <Text style={styles.createAccText}>Create Your Account</Text>
+        </View>
+
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"} // 'padding' for iOS, 'height' for Android
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Adjust this offset if content is still hidden
+          style={{
+            flex: 1,
+            backgroundColor: "#fff",
+            borderTopLeftRadius: 26,
+            borderTopRightRadius: 26,
+          }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
         >
-          <View style={styles.createAcc}>
-            <Text style={styles.createAccText}>Create Your Account</Text>
-          </View>
+          <View style={styles.formContainer}>
+            <Text style={styles.text}>First Name</Text>
+            <TextInput
+              style={[styles.input, firstNameError ? styles.inputError : null]}
+              value={firstName}
+              onChangeText={(text) => {
+                setFirstName(text);
+                if (firstNameError)
+                  validateTextInput(text, "First Name", setFirstNameError);
+              }}
+              onBlur={() =>
+                validateTextInput(firstName, "First Name", setFirstNameError)
+              }
+            />
+            {firstNameError ? (
+              <Text style={styles.errorText}>{firstNameError}</Text>
+            ) : null}
 
-          {/* Form container wrapped in ScrollView */}
-          <ScrollView
-            contentContainerStyle={styles.scrollViewContent} // Use contentContainerStyle for ScrollView
-            keyboardShouldPersistTaps="handled" // Ensures taps outside inputs dismiss keyboard
-          >
-            <View style={styles.formContainer}>
-              <Text style={styles.text}>First Name</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  firstNameError ? styles.inputError : null,
-                ]}
-                value={firstName}
-                onChangeText={(text) => {
-                  setFirstName(text);
-                  if (firstNameError)
-                    validateTextInput(text, "First Name", setFirstNameError);
-                }}
-                onBlur={() =>
-                  validateTextInput(firstName, "First Name", setFirstNameError)
-                }
-              />
-              {firstNameError ? (
-                <Text style={styles.errorText}>{firstNameError}</Text>
-              ) : null}
+            <Text style={styles.text}>Last Name</Text>
+            <TextInput
+              style={[styles.input, lastNameError ? styles.inputError : null]}
+              value={lastName}
+              onChangeText={(text) => {
+                setLastName(text);
+                if (lastNameError)
+                  validateTextInput(text, "Last Name", setLastNameError);
+              }}
+              onBlur={() =>
+                validateTextInput(lastName, "Last Name", setLastNameError)
+              }
+            />
+            {lastNameError ? (
+              <Text style={styles.errorText}>{lastNameError}</Text>
+            ) : null}
 
-              <Text style={styles.text}>Last Name</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  lastNameError ? styles.inputError : null,
-                ]}
-                value={lastName}
-                onChangeText={(text) => {
-                  setLastName(text);
-                  if (lastNameError)
-                    validateTextInput(text, "Last Name", setLastNameError);
-                }}
-                onBlur={() =>
-                  validateTextInput(lastName, "Last Name", setLastNameError)
-                }
-              />
-              {lastNameError ? (
-                <Text style={styles.errorText}>{lastNameError}</Text>
-              ) : null}
+            <Text style={styles.text}>Email</Text>
+            <TextInput
+              style={[styles.input, emailError ? styles.inputError : null]}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) validateEmail(text);
+              }}
+              onBlur={() => validateEmail(email)}
+            />
+            {emailError ? (
+              <Text style={styles.errorText}>{emailError}</Text>
+            ) : null}
 
-              <Text style={styles.text}>Email</Text>
-              <TextInput
-                style={[styles.input, emailError ? styles.inputError : null]}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (emailError) validateEmail(text);
-                }}
-                onBlur={() => validateEmail(email)}
-              />
-              {emailError ? (
-                <Text style={styles.errorText}>{emailError}</Text>
-              ) : null}
+            <Text style={styles.text}>Password</Text>
+            <TextInput
+              style={[styles.input, passwordError ? styles.inputError : null]}
+              secureTextEntry
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) validatePassword(text);
+              }}
+              onBlur={() => validatePassword(password)}
+            />
+            {passwordError ? (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            ) : null}
 
-              <Text style={styles.text}>Password</Text>
-              <TextInput
-                style={[styles.input, passwordError ? styles.inputError : null]}
-                secureTextEntry
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (passwordError) validatePassword(text);
-                }}
-                onBlur={() => validatePassword(password)}
-              />
-              {passwordError ? (
-                <Text style={styles.errorText}>{passwordError}</Text>
-              ) : null}
+            <Text style={styles.text}>Confirm Password</Text>
+            <TextInput
+              style={[
+                styles.input,
+                confirmPasswordError ? styles.inputError : null,
+              ]}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (confirmPasswordError)
+                  validateConfirmPassword(text, password);
+              }}
+              onBlur={() => validateConfirmPassword(confirmPassword, password)}
+            />
+            {confirmPasswordError ? (
+              <Text style={styles.errorText}>{confirmPasswordError}</Text>
+            ) : null}
 
-              <Text style={styles.text}>Confirm Password</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  confirmPasswordError ? styles.inputError : null,
-                ]}
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (confirmPasswordError)
-                    validateConfirmPassword(text, password);
-                }}
-                onBlur={() =>
-                  validateConfirmPassword(confirmPassword, password)
-                }
-              />
-              {confirmPasswordError ? (
-                <Text style={styles.errorText}>{confirmPasswordError}</Text>
-              ) : null}
+            <TouchableOpacity style={styles.signUpBtn} onPress={handleSignUp}>
+              <Text style={styles.btnText}>SIGN UP</Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity style={styles.signUpBtn} onPress={handleSignUp}>
-                <Text style={styles.btnText}>SIGN UP</Text>
+            <View style={styles.signInContainer}>
+              <Text>Already have an account?</Text>
+              <TouchableOpacity onPress={() => replace("/signin")}>
+                <Text style={styles.signInText}>Sign In</Text>
               </TouchableOpacity>
-
-              <View style={styles.signInContainer}>
-                <Text>Already have an account?</Text>
-                <TouchableOpacity onPress={() => replace("/signin")}>
-                  <Text style={styles.signInText}>Sign In</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </ScrollView>
+          </View>
         </KeyboardAvoidingView>
         <StatusBar style="light" />
-      </SafeAreaView>
+      </View>
     </TouchableWithoutFeedback>
   );
 };
@@ -289,9 +266,8 @@ const styles = StyleSheet.create({
   },
 
   createAcc: {
-    paddingBottom: 80,
-    paddingTop: 16,
     paddingHorizontal: 20,
+    paddingVertical: 60,
   },
 
   createAccText: {
@@ -301,46 +277,40 @@ const styles = StyleSheet.create({
     width: 150,
   },
 
-  // Added for ScrollView to ensure content fills space
-  scrollViewContent: {
-    flexGrow: 1, // Allows content to grow and push elements to bottom if needed
-    justifyContent: "space-between", // Distributes space evenly
-  },
-
   formContainer: {
-    flex: 1, // Allows form to take available space within ScrollView
+    flex: 1,
     backgroundColor: "#fff",
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     paddingHorizontal: 20,
     paddingVertical: 40,
-    // Removed marginBottom: -50 as it can interfere with KeyboardAvoidingView and ScrollView
+    borderRightColor: "#fff",
   },
 
   text: {
-    color: "#ff5330",
+    color: "#000",
   },
 
   input: {
     borderBottomWidth: 1,
-    marginBottom: 28, // Adjusted to make space for error message
+    marginBottom: 28,
     fontSize: 20,
     borderColor: "#949494",
     paddingTop: 10,
   },
   inputError: {
-    borderColor: "red", // Highlight input border in red on error
+    borderColor: "red",
   },
   errorText: {
     color: "red",
     fontSize: 12,
-    marginTop: -20, // Pull it up closer to the input
-    marginBottom: 10, // Add some space below the error
+    marginTop: -20,
+    marginBottom: 10,
   },
 
   signInContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
   },
 
   signUpBtn: {
@@ -362,5 +332,6 @@ const styles = StyleSheet.create({
 
   signInText: {
     color: "#ff5330",
+    marginLeft: 12,
   },
 });

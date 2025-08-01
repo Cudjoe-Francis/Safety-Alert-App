@@ -1,19 +1,25 @@
+import Entypo from "@expo/vector-icons/Entypo";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as ImagePicker from "expo-image-picker";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
-  Pressable,
-  View,
-  Image,
   TextInput,
-  Alert,
-  ActivityIndicator,
-  Platform,
+  View,
 } from "react-native";
-import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Entypo from "@expo/vector-icons/Entypo";
-import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "..//../themeContext";
+import { StatusBar } from "expo-status-bar";
 
 interface UserDetailsModalProps {
   closeModal: () => void;
@@ -142,20 +148,30 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
     }
   };
 
+  const iconMap = {
+    phone: <MaterialIcons name="phone" size={20} color="#ff5330" />,
+    email: <MaterialIcons name="email" size={20} color="#ff5330" />,
+    address: <Entypo name="address" size={20} color="#ff5330" />,
+    gender: <Ionicons name="male-female" size={20} color="#ff5330" />,
+    dob: <MaterialIcons name="cake" size={20} color="#ff5330" />,
+    bloodType: <FontAwesome5 name="tint" size={18} color="#ff5330" />,
+    medicalCondition: (
+      <MaterialIcons name="healing" size={20} color="#ff5330" />
+    ),
+    allergies: <MaterialIcons name="warning" size={20} color="#ff5330" />,
+  };
+
   return (
     <SafeAreaView
-      style={[
-        styles.safeArea,
-        { backgroundColor: isDarkMode ? theme.background : theme.card },
-      ]}
+      style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
       {/* Top Container with Close and Edit/Done Buttons */}
       <View
         style={[
           styles.topContainer,
           {
-            backgroundColor: isDarkMode ? theme.card : theme.background,
-            borderBlockColor: isDarkMode ? "grey" : "#eee",
+            backgroundColor: theme.card,
+            borderBottomColor: isDarkMode ? "#222" : "#eee",
           },
         ]}
       >
@@ -164,256 +180,347 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
         </Pressable>
         <Pressable onPress={handleEditToggle}>
           {isEditing ? (
-            <Entypo name="check" size={24} color="#ff5330" />
+            // <Entypo name="check" size={24} color="#ff5330" />
+            <Text style={{ color: '#ff5330', fontWeight: '800', fontSize: 16 }}>Done</Text>
           ) : (
-            <Entypo name="edit" size={20} color="#ff5330" />
+            // <Entypo name="edit" size={20} color="#ff5330" />
+            <Text style={{ color: '#ff5330', fontWeight: '800', fontSize: 16 }}>Edit</Text>
           )}
         </Pressable>
       </View>
 
-      {/* Profile Details Container */}
-      <View
-        style={[
-          styles.profileContainer,
-          { backgroundColor: isDarkMode ? theme.card : theme.background },
-        ]}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 250 : 0}
       >
-        {/* Profile Image and Name/Occupation */}
-        <View style={styles.profileImageContainer}>
-          <Pressable
-            onPress={handleProfilePictureClick}
-            style={styles.profileImagePressable}
-          >
-            <Image
-              source={{
-                uri: isEditing ? tempProfileImageSrc : profileImageSrc,
-              }}
-              style={styles.profileImage}
-            />
-            {isEditing && (
-              <View style={styles.changeOverlay}>
-                {isPickingImage ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.changeText}>Change</Text>
-                )}
+        {/* Profile Details Container */}
+        <View
+          style={[styles.profileContainer, { backgroundColor: theme.card }]}
+        >
+          {/* Profile Image and Name/Occupation */}
+          <View style={styles.profileImageContainer}>
+            <Pressable
+              onPress={handleProfilePictureClick}
+              style={styles.profileImagePressable}
+            >
+              <Image
+                source={{
+                  uri: isEditing ? tempProfileImageSrc : profileImageSrc,
+                }}
+                style={styles.profileImage}
+              />
+              {isEditing && (
+                <View style={styles.changeOverlay}>
+                  {isPickingImage ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.changeText}>Change</Text>
+                  )}
+                </View>
+              )}
+            </Pressable>
+            <View style={styles.name_occupation_ctn}>
+              <Text
+                style={[
+                  styles.nameText,
+                  { color: isDarkMode ? "#fff" : "#000" },
+                ]}
+              >
+                {userDetails.name}
+              </Text>
+              <Text
+                style={[
+                  styles.occupationText,
+                  { color: isDarkMode ? "#bbb" : "grey" },
+                ]}
+              >
+                {userDetails.occupation}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.detailsCard, { backgroundColor: theme.card }]}>
+            <ScrollView
+              style={styles.detailsList}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Phone Number */}
+              <View style={styles.detailRow}>
+                {iconMap.phone}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Phone No
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Phone Number"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.phone}
+                      onChangeText={(text) => handleFieldChange("phone", text)}
+                      keyboardType="phone-pad"
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.phone}
+                    </Text>
+                  )}
+                </View>
               </View>
-            )}
-          </Pressable>
-          <View style={styles.name_occupation_ctn}>
-            <Text
-              style={[styles.nameText, { color: isDarkMode ? "#fff" : "#000" }]}
-            >
-              {userDetails.name}
-            </Text>
-            <Text
-              style={[
-                styles.occupationText,
-                { color: isDarkMode ? "#fff" : "grey" },
-              ]}
-            >
-              {userDetails.occupation}
-            </Text>
+              <View style={styles.divider} />
+
+              {/* Email */}
+              <View style={styles.detailRow}>
+                {iconMap.email}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Email
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
+                    ]}
+                  >
+                    {userDetails.email}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Home Address */}
+              <View style={styles.detailRow}>
+                {iconMap.address}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Home Address
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Home Address"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.address}
+                      onChangeText={(text) =>
+                        handleFieldChange("address", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.address}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Gender */}
+              <View style={styles.detailRow}>
+                {iconMap.gender}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Gender
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
+                    ]}
+                  >
+                    {userDetails.gender}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Date of Birth */}
+              <View style={styles.detailRow}>
+                {iconMap.dob}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Date of Birth
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
+                    ]}
+                  >
+                    {userDetails.dob}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Blood Type */}
+              <View style={styles.detailRow}>
+                {iconMap.bloodType}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Blood Type
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
+                    ]}
+                  >
+                    {userDetails.bloodType}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Medical Condition */}
+              <View style={styles.detailRow}>
+                {iconMap.medicalCondition}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Medical Condition
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Medical Condition"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.medicalCondition}
+                      onChangeText={(text) =>
+                        handleFieldChange("medicalCondition", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.medicalCondition}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Allergies */}
+              <View style={styles.detailRow}>
+                {iconMap.allergies}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Allergies
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Allergies"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.allergies}
+                      onChangeText={(text) =>
+                        handleFieldChange("allergies", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.allergies}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </ScrollView>
           </View>
         </View>
+      </KeyboardAvoidingView>
 
-        {/* User Details List */}
-        <View style={styles.detailsList}>
-          {/* Phone Number */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                [styles.detailsQue],
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Phone No
-            </Text>
-            {isEditing ? (
-              <TextInput
-                style={styles.detailsInput}
-                value={tempDetails.phone}
-                onChangeText={(text) => handleFieldChange("phone", text)}
-                keyboardType="phone-pad"
-              />
-            ) : (
-              <Text
-                style={[
-                  styles.detailsAns,
-                  { color: isDarkMode ? "#fff" : "#000" },
-                ]}
-              >
-                {userDetails.phone}
-              </Text>
-            )}
-          </View>
-
-          {/* Email */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailsQue,
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Email
-            </Text>
-            <Text
-              style={[
-                styles.detailsAns,
-                { color: isDarkMode ? "#fff" : "#000" },
-              ]}
-            >
-              {userDetails.email}
-            </Text>
-          </View>
-
-          {/* Home Address */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                [styles.detailsQue, { color: isDarkMode ? "#ddd" : "grey" }],
-              ]}
-            >
-              Home Address
-            </Text>
-            {isEditing ? (
-              <TextInput
-                style={styles.detailsInput}
-                value={tempDetails.address}
-                onChangeText={(text) => handleFieldChange("address", text)}
-              />
-            ) : (
-              <Text
-                style={[
-                  styles.detailsAns,
-                  { color: isDarkMode ? "#fff" : "#000" },
-                ]}
-              >
-                {userDetails.address}
-              </Text>
-            )}
-          </View>
-
-          {/* Gender */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailsQue,
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Gender
-            </Text>
-            <Text
-              style={[
-                styles.detailsAns,
-                { color: isDarkMode ? "#fff" : "#000" },
-              ]}
-            >
-              {userDetails.gender}
-            </Text>
-          </View>
-
-          {/* Date of Birth */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailsQue,
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Date of Birth
-            </Text>
-            <Text
-              style={[
-                styles.detailsAns,
-                { color: isDarkMode ? "#fff" : "#000" },
-              ]}
-            >
-              {userDetails.dob}
-            </Text>
-          </View>
-
-          {/* Blood Type */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailsQue,
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Blood Type
-            </Text>
-            <Text
-              style={[
-                styles.detailsAns,
-                { color: isDarkMode ? "#fff" : "#000" },
-              ]}
-            >
-              {userDetails.bloodType}
-            </Text>
-          </View>
-
-          {/* Medical Condition */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailsQue,
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Medical Condition
-            </Text>
-            {isEditing ? (
-              <TextInput
-                style={styles.detailsInput}
-                value={tempDetails.medicalCondition}
-                onChangeText={(text) =>
-                  handleFieldChange("medicalCondition", text)
-                }
-              />
-            ) : (
-              <Text
-                style={[
-                  styles.detailsAns,
-                  { color: isDarkMode ? "#fff" : "#000" },
-                ]}
-              >
-                {userDetails.medicalCondition}
-              </Text>
-            )}
-          </View>
-
-          {/* Allergies */}
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailsQue,
-                { color: isDarkMode ? "#ddd" : "grey" },
-              ]}
-            >
-              Allergies
-            </Text>
-            {isEditing ? (
-              <TextInput
-                style={styles.detailsInput}
-                value={tempDetails.allergies}
-                onChangeText={(text) => handleFieldChange("allergies", text)}
-              />
-            ) : (
-              <Text
-                style={[
-                  styles.detailsAns,
-                  { color: isDarkMode ? "#fff" : "#000" },
-                ]}
-              >
-                {userDetails.allergies}
-              </Text>
-            )}
-          </View>
-        </View>
-      </View>
+      <StatusBar style={isDarkMode ? "dark" : "light"} />
     </SafeAreaView>
   );
 };
@@ -430,14 +537,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: "center",
-    // backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   profileContainer: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    backgroundColor: "#fff",
     marginHorizontal: 10,
     borderRadius: 10,
     marginTop: 20,
@@ -495,11 +599,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "grey",
   },
+  detailsCard: {
+    borderRadius: 14,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+    marginBottom: 20,
+  },
   detailsList: {
     paddingBottom: 20,
   },
   detailRow: {
-    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 12,
+  },
+  detailTextCtn: {
+    flex: 1,
   },
   detailsQue: {
     fontSize: 14,
@@ -511,11 +631,15 @@ const styles = StyleSheet.create({
   detailsInput: {
     fontSize: 18,
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    color: "#333",
-    backgroundColor: "#fefefe",
+    marginBottom: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginVertical: 6,
+    marginLeft: 32,
   },
 });

@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -9,14 +8,51 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View,NativeScrollEvent,
+  NativeSyntheticEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+
+import * as Location from "expo-location";
+import { database } from "..//..//firebaseConfig";
+import { ref, set } from "firebase/database";
 import { useTheme } from "../../themeContext";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useState, useCallback, useEffect } from "react";
+
 
 const IncidentReport = () => {
   const [problem, setProblem] = useState("");
   const { isDarkMode, theme } = useTheme();
+
+
+  const navigation = useNavigation();
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: isDarkMode
+          ? offsetY > 23
+            ? "#121212"
+            : "#000"
+          : "#fff",
+      },
+    });
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({
+        headerStyle: {
+          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
+        },
+      });
+    }, [isDarkMode, navigation])
+  );
+
 
   const handleSubmit = () => {
     if (problem.trim() === "") {

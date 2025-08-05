@@ -1,22 +1,28 @@
+import * as LocalAuthentication from "expo-local-authentication";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
   TouchableWithoutFeedback,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Alert,
+  View,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
 import { auth } from "../../firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import * as LocalAuthentication from "expo-local-authentication";
+
+import { getDatabase, off, onValue, ref } from "firebase/database";
 
 const SignInScreen = () => {
   const router = useRouter();
@@ -28,6 +34,8 @@ const SignInScreen = () => {
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState<string>("there");
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   // Check if biometric is supported
   useEffect(() => {
@@ -36,6 +44,26 @@ const SignInScreen = () => {
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       setBiometricSupported(compatible && enrolled);
     })();
+  }, []);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const db = getDatabase();
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userRef = ref(db, `users/${user.uid}`);
+        const listener = onValue(userRef, (snapshot) => {
+          const data = snapshot.val();
+          setUserDetails(data);
+          setCurrentUserName(data?.firstName || "there");
+        });
+        return () => off(userRef, "value", listener);
+      } else {
+        setCurrentUserName("there");
+        setUserDetails(null);
+      }
+    });
+    return () => unsubscribeAuth();
   }, []);
 
   const validateEmail = (email: string): boolean => {
@@ -203,14 +231,14 @@ const SignInScreen = () => {
                 )}
               </TouchableOpacity>
 
-              {biometricSupported && (
+              {/* {biometricSupported && (
                 <TouchableOpacity
                   onPress={handleBiometricAuth}
                   style={styles.biometricBtn}
                 >
                   <Text style={styles.btnText}>🔒 Biometric Login</Text>
                 </TouchableOpacity>
-              )}
+              )} */}
 
               <View style={styles.signInContainer}>
                 <Text>Don`t have an account?</Text>
@@ -218,6 +246,9 @@ const SignInScreen = () => {
                   <Text style={styles.signInText}> Sign Up</Text>
                 </TouchableOpacity>
               </View>
+              {/* <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
+                <Text style={{ fontSize: 40 }}>Home</Text>
+              </TouchableOpacity> */}
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -270,6 +301,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     fontSize: 20,
     borderColor: "#949494",
+    paddingVertical: 4,
   },
   inputError: {
     borderColor: "red",
@@ -317,170 +349,3 @@ const styles = StyleSheet.create({
     color: "#ff5330",
   },
 });
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// import {
-//   StyleSheet,
-//   Text,
-//   TextInput,
-//   TouchableOpacity,
-//   View,
-//   TouchableWithoutFeedback,
-//   Keyboard,
-//   KeyboardAvoidingView,
-//   Platform,
-//   ScrollView,
-// } from "react-native";
-// import React, { useState } from "react";
-// import { SafeAreaView } from "react-native-safe-area-context";
-// import { StatusBar } from "expo-status-bar";
-// import { useRouter } from "expo-router";
-
-// const SignInScreen = () => {
-//   const router = useRouter();
-
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-
-//   const handleSignIn = () => {
-//     console.log("Navigating to home screen directly from Sign In button.");
-//     router.replace("/(tabs)");
-//   };
-
-//   return (
-//     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-//       <SafeAreaView style={styles.mainContainer}>
-//         <KeyboardAvoidingView
-//           style={{ flex: 1 }}
-//           behavior={Platform.OS === "ios" ? "padding" : "height"}
-//         >
-//           <View style={styles.createAcc}>
-//             <Text style={styles.createAccText}>Hello Sign In!</Text>
-//           </View>
-
-//           <ScrollView contentContainerStyle={styles.scrollViewContent}>
-//             <View style={styles.formContainer}>
-//               <Text style={styles.welcomeText}>Welcome Back</Text>
-
-//               <Text style={styles.text}>Email</Text>
-//               <TextInput
-//                 style={styles.input}
-//                 keyboardType="email-address"
-//                 autoCapitalize="none"
-//                 value={email}
-//                 onChangeText={(text) => {
-//                   setEmail(text);
-//                 }}
-//               />
-
-//               <Text style={styles.text}>Password</Text>
-//               <TextInput
-//                 style={styles.input}
-//                 secureTextEntry
-//                 value={password}
-//                 onChangeText={(text) => {
-//                   setPassword(text);
-//                 }}
-//               />
-
-//               <TouchableOpacity>
-//                 <Text style={styles.forgotPasswordText}>Forgot Password</Text>
-//               </TouchableOpacity>
-
-//               <TouchableOpacity
-//                 style={styles.signUpBtn}
-//                 onPress={handleSignIn}
-//               >
-//                 <Text style={styles.btnText}>SIGN IN</Text>
-//               </TouchableOpacity>
-
-//               <View style={styles.signInContainer}>
-//                 <Text>Don`t have an account?</Text>
-//                 <TouchableOpacity onPress={() => router.replace("/signup")}>
-//                   <Text style={styles.signInText}> Sign Up</Text>
-//                 </TouchableOpacity>
-//               </View>
-//             </View>
-//           </ScrollView>
-//         </KeyboardAvoidingView>
-//         <StatusBar style="light" />
-//       </SafeAreaView>
-//     </TouchableWithoutFeedback>
-//   );
-// };
-
-// export default SignInScreen;
-
-// const styles = StyleSheet.create({
-//   mainContainer: {
-//     backgroundColor: "#ff5330",
-//     flex: 1,
-//   },
-//   createAcc: {
-//     paddingBottom: 80,
-//     paddingTop: 16,
-//     paddingHorizontal: 20,
-//   },
-//   createAccText: {
-//     color: "#fff",
-//     fontSize: 22,
-//     fontWeight: "bold",
-//     width: 80,
-//   },
-//   scrollViewContent: {
-//     flexGrow: 1,
-//     justifyContent: "space-between",
-//   },
-//   formContainer: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//     borderTopLeftRadius: 26,
-//     borderTopRightRadius: 26,
-//     paddingHorizontal: 20,
-//     paddingVertical: 40,
-//   },
-//   welcomeText: {
-//     fontSize: 22,
-//     paddingBottom: 70,
-//     textAlign: "center",
-//     fontWeight: "bold",
-//   },
-//   text: {
-//     color: "#ff5330",
-//   },
-//   input: {
-//     borderBottomWidth: 1,
-//     marginBottom: 28,
-//     fontSize: 20,
-//     borderColor: "#949494",
-//   },
-//   forgotPasswordText: {
-//     marginTop: -10,
-//     textAlign: "right",
-//     color: "#FF5330",
-//   },
-//   signInContainer: {
-//     flexDirection: "row",
-//     justifyContent: "center",
-//     gap: 4,
-//   },
-//   signUpBtn: {
-//     backgroundColor: "#ff5330",
-//     borderRadius: 20,
-//     marginTop: 40,
-//     paddingVertical: 10,
-//     width: 340,
-//     alignSelf: "center",
-//     marginBottom: 20,
-//   },
-//   btnText: {
-//     textAlign: "center",
-//     color: "#fff",
-//     fontSize: 18,
-//     fontWeight: "bold",
-//   },
-//   signInText: {
-//     color: "#ff5330",
-//   },
-// });

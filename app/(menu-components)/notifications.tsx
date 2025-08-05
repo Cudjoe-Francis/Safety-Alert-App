@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState,  useCallback} from "react";
 import {
   Animated,
   Easing,
@@ -8,9 +8,13 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  View,
+  View,NativeScrollEvent,
+  NativeSyntheticEvent,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext"; // <-- Add this import
+
+import { useTheme } from "../../themeContext";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 type NotificationItem = {
   id: string;
@@ -23,6 +27,34 @@ const NotificationScreen = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { notifications: appNotifications } = useNotification(); // <-- Get in-app notifications
+
+  const { theme, isDarkMode } = useTheme();
+
+  const navigation = useNavigation();
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: isDarkMode
+          ? offsetY > 23
+            ? "#121212"
+            : "#000"
+          : "#fff",
+      },
+    });
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({
+        headerStyle: {
+          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
+        },
+      });
+    }, [isDarkMode, navigation])
+  );
 
   useEffect(() => {
     animateIn();

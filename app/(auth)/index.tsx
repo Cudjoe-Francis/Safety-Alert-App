@@ -10,6 +10,7 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { push } from "expo-router/build/global-state/routing";
+import { router } from "expo-router";
 
 const googleLogo = require("..//../assets/images/google.png");
 const instagramLogo = require("..//../assets/images/instagram.jpeg");
@@ -22,7 +23,9 @@ const FlashScreen = () => {
     <ImageBackground source={backgroundImage} style={styles.bgImage}>
       <SafeAreaView style={styles.container}>
         <View style={styles.topContainer}>
-          <Text style={[styles.welcomeText, styles.safetyText]}>Welcome To Safety Alert App</Text>
+          <Text style={[styles.welcomeText, styles.safetyText]}>
+            Welcome To Safety Alert App
+          </Text>
           <Text style={styles.welcomeText}>Your Safety Matters</Text>
         </View>
 
@@ -55,6 +58,12 @@ const FlashScreen = () => {
             <TouchableOpacity style={styles.icon}>
               <Image source={googleLogo} style={styles.img} />
             </TouchableOpacity>
+
+            {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
+            <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
+              <Text style={{ fontSize: 40 }}>Home</Text>
+            </TouchableOpacity>
+            {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
           </View>
         </View>
         <StatusBar style="light" />
@@ -89,21 +98,20 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
 
-
   welcomeText: {
     color: "#fff",
     fontSize: 16,
     textAlign: "center",
     paddingTop: 10,
-    fontWeight: '400',
-    fontStyle: 'italic',
+    fontWeight: "400",
+    fontStyle: "italic",
   },
 
   safetyText: {
     paddingTop: 20,
     fontSize: 24,
     fontWeight: "bold",
-    fontStyle: 'normal',
+    fontStyle: "normal",
   },
 
   signInContainer: {

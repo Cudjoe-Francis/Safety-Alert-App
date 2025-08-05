@@ -2,7 +2,11 @@ import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
+import { StatusBar } from "expo-status-bar";
+import { getAuth } from "firebase/auth";
+import { getDatabase, onValue, ref } from "firebase/database";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,11 +19,12 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "..//../themeContext";
-import { StatusBar } from "expo-status-bar";
+import { useTheme } from "..//..//themeContext";
 
 interface UserDetailsModalProps {
   closeModal: () => void;
@@ -27,6 +32,7 @@ interface UserDetailsModalProps {
 
 // Placeholder for a local image asset (replace with your actual path if needed)
 const defaultProfilePictureUri =
+  // require("../../assets/images/default-profile-picture.png");
   "https://placehold.co/60x60/ff5330/ffffff?text=PP";
 
 const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
@@ -34,20 +40,21 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
 
   // State to manage edit mode
   const [isEditing, setIsEditing] = useState(false);
-  // State to manage loading state for image picking
   const [isPickingImage, setIsPickingImage] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // State to store user details
+  // State to store user details (default to "None" for missing fields)
   const [userDetails, setUserDetails] = useState({
-    name: "Francis Cudjoe",
-    occupation: "Student",
-    phone: "0256782612",
-    email: "cudjoefrancis1225@gmail.com",
-    address: "AK-0247-9459",
-    gender: "Male",
-    dob: "24 June 2008",
-    bloodType: "O",
-    medicalCondition: "Asthma",
+    firstName: "None",
+    lastName: "None",
+    occupation: "None",
+    phone: "None",
+    email: "None",
+    address: "None",
+    gender: "None",
+    dob: "None",
+    bloodType: "None",
+    medicalCondition: "None",
     allergies: "None",
   });
 
@@ -60,6 +67,22 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
   const [tempDetails, setTempDetails] = useState(userDetails);
   const [tempProfileImageSrc, setTempProfileImageSrc] =
     useState(profileImageSrc);
+
+  // New states for dropdown open/close
+  const [genderOpen, setGenderOpen] = useState(false);
+  const [bloodOpen, setBloodOpen] = useState(false);
+
+  // For DropDownPicker, values must be in arrays
+  const genderItems = [
+    { label: "M", value: "M" },
+    { label: "F", value: "F" },
+  ];
+  const bloodItems = [
+    { label: "A", value: "A" },
+    { label: "AB", value: "AB" },
+    { label: "B", value: "B" },
+    { label: "O", value: "O" },
+  ];
 
   // Request permissions on component mount
   useEffect(() => {
@@ -77,6 +100,35 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
         }
       }
     })();
+  }, []);
+
+  // Fetch user details from Firebase on mount
+  useEffect(() => {
+    const auth = getAuth();
+    const db = getDatabase();
+    const user = auth.currentUser;
+    if (user) {
+      // Get email from Auth
+      const email = user.email || "None";
+      // Get other details from Realtime Database
+      const userRef = ref(db, `users/${user.uid}`);
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        setUserDetails({
+          firstName: data.firstName || "None",
+          lastName: data.lastName || "None",
+          occupation: data.occupation || "None",
+          phone: data.phone || "None",
+          email: email,
+          address: data.address || "None",
+          gender: data.gender || "None",
+          dob: data.dob || "None",
+          bloodType: data.bloodType || "None",
+          medicalCondition: data.medicalCondition || "None",
+          allergies: data.allergies || "None",
+        });
+      });
+    }
   }, []);
 
   // Function to handle toggling between view and edit mode
@@ -181,10 +233,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
         <Pressable onPress={handleEditToggle}>
           {isEditing ? (
             // <Entypo name="check" size={24} color="#ff5330" />
-            <Text style={{ color: '#ff5330', fontWeight: '800', fontSize: 16 }}>Done</Text>
+            <Text style={{ color: "#ff5330", fontWeight: "800", fontSize: 16 }}>
+              Done
+            </Text>
           ) : (
             // <Entypo name="edit" size={20} color="#ff5330" />
-            <Text style={{ color: '#ff5330', fontWeight: '800', fontSize: 16 }}>Edit</Text>
+            <Text style={{ color: "#ff5330", fontWeight: "800", fontSize: 16 }}>
+              Edit
+            </Text>
           )}
         </Pressable>
       </View>
@@ -192,11 +248,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 250 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
       >
         {/* Profile Details Container */}
-        <View
+        <ScrollView
           style={[styles.profileContainer, { backgroundColor: theme.card }]}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Profile Image and Name/Occupation */}
           <View style={styles.profileImageContainer}>
@@ -227,7 +286,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                   { color: isDarkMode ? "#fff" : "#000" },
                 ]}
               >
-                {userDetails.name}
+                {userDetails.firstName} {userDetails.lastName}
               </Text>
               <Text
                 style={[
@@ -241,134 +300,203 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
           </View>
 
           <View style={[styles.detailsCard, { backgroundColor: theme.card }]}>
-            <ScrollView
-              style={styles.detailsList}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {/* Phone Number */}
-              <View style={styles.detailRow}>
-                {iconMap.phone}
-                <View style={styles.detailTextCtn}>
-                  <Text
+            {/* Phone Number */}
+            <View style={styles.detailRow}>
+              {iconMap.phone}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Phone No
+                </Text>
+                {isEditing ? (
+                  <TextInput
                     style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
+                      styles.detailsInput,
+                      {
+                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                        color: isDarkMode ? "#fff" : "#333",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                      },
                     ]}
-                  >
-                    Phone No
-                  </Text>
-                  {isEditing ? (
-                    <TextInput
-                      style={[
-                        styles.detailsInput,
-                        {
-                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                          color: isDarkMode ? "#fff" : "#333",
-                          borderColor: isDarkMode ? "#333" : "#ddd",
-                        },
-                      ]}
-                      placeholder="Phone Number"
-                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                      value={tempDetails.phone}
-                      onChangeText={(text) => handleFieldChange("phone", text)}
-                      keyboardType="phone-pad"
-                      returnKeyType="done"
-                    />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.detailsAns,
-                        { color: isDarkMode ? "#fff" : "#000" },
-                      ]}
-                    >
-                      {userDetails.phone}
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <View style={styles.divider} />
-
-              {/* Email */}
-              <View style={styles.detailRow}>
-                {iconMap.email}
-                <View style={styles.detailTextCtn}>
-                  <Text
-                    style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
-                    ]}
-                  >
-                    Email
-                  </Text>
+                    placeholder="Phone Number"
+                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                    value={tempDetails.phone}
+                    onChangeText={(text) => handleFieldChange("phone", text)}
+                    keyboardType="phone-pad"
+                    returnKeyType="done"
+                  />
+                ) : (
                   <Text
                     style={[
                       styles.detailsAns,
                       { color: isDarkMode ? "#fff" : "#000" },
                     ]}
                   >
-                    {userDetails.email}
+                    {userDetails.phone}
                   </Text>
-                </View>
+                )}
               </View>
-              <View style={styles.divider} />
+            </View>
+            <View style={styles.divider} />
 
-              {/* Home Address */}
-              <View style={styles.detailRow}>
-                {iconMap.address}
-                <View style={styles.detailTextCtn}>
+            {/* Email */}
+            <View style={styles.detailRow}>
+              {iconMap.email}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Email
+                </Text>
+                <Text
+                  style={[
+                    styles.detailsAns,
+                    { color: isDarkMode ? "#fff" : "#000" },
+                  ]}
+                >
+                  {userDetails.email}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
+
+            {/* Home Address */}
+            <View style={styles.detailRow}>
+              {iconMap.address}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Home Address
+                </Text>
+                {isEditing ? (
+                  <TextInput
+                    style={[
+                      styles.detailsInput,
+                      {
+                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                        color: isDarkMode ? "#fff" : "#333",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                      },
+                    ]}
+                    placeholder="Home Address"
+                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                    value={tempDetails.address}
+                    onChangeText={(text) =>
+                      handleFieldChange("address", text)
+                    }
+                    returnKeyType="done"
+                  />
+                ) : (
                   <Text
                     style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
                     ]}
                   >
-                    Home Address
+                    {userDetails.address}
                   </Text>
-                  {isEditing ? (
-                    <TextInput
-                      style={[
-                        styles.detailsInput,
-                        {
-                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                          color: isDarkMode ? "#fff" : "#333",
-                          borderColor: isDarkMode ? "#333" : "#ddd",
-                        },
-                      ]}
-                      placeholder="Home Address"
-                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                      value={tempDetails.address}
-                      onChangeText={(text) =>
-                        handleFieldChange("address", text)
-                      }
-                      returnKeyType="done"
-                    />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.detailsAns,
-                        { color: isDarkMode ? "#fff" : "#000" },
-                      ]}
-                    >
-                      {userDetails.address}
-                    </Text>
-                  )}
-                </View>
+                )}
               </View>
-              <View style={styles.divider} />
+            </View>
+            <View style={styles.divider} />
 
-              {/* Gender */}
-              <View style={styles.detailRow}>
-                {iconMap.gender}
-                <View style={styles.detailTextCtn}>
+            {/* Occupation */}
+            <View style={styles.detailRow}>
+              <MaterialIcons name="work" size={20} color="#ff5330" />
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Occupation
+                </Text>
+                {isEditing ? (
+                  <TextInput
+                    style={[
+                      styles.detailsInput,
+                      {
+                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                        color: isDarkMode ? "#fff" : "#333",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                      },
+                    ]}
+                    placeholder="Occupation"
+                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                    value={tempDetails.occupation}
+                    onChangeText={(text) =>
+                      handleFieldChange("occupation", text)
+                    }
+                    returnKeyType="done"
+                  />
+                ) : (
                   <Text
                     style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
                     ]}
                   >
-                    Gender
+                    {userDetails.occupation}
                   </Text>
+                )}
+              </View>
+            </View>
+            <View style={styles.divider} />
+
+            {/* Gender */}
+            <View style={styles.detailRow}>
+              {iconMap.gender}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Gender
+                </Text>
+                {isEditing ? (
+                  <DropDownPicker
+                    open={genderOpen}
+                    setOpen={setGenderOpen}
+                    value={
+                      tempDetails.gender === "None"
+                        ? null
+                        : tempDetails.gender
+                    }
+                    setValue={(val) =>
+                      handleFieldChange("gender", val() || "None")
+                    }
+                    items={genderItems}
+                    placeholder="Select Gender"
+                    style={{
+                      backgroundColor: isDarkMode ? "#222" : "#f9f9f9",
+                      borderColor: isDarkMode ? "#333" : "#ddd",
+                      minHeight: 44,
+                    }}
+                    textStyle={{
+                      color: isDarkMode ? "#fff" : "#222",
+                    }}
+                    dropDownContainerStyle={{
+                      backgroundColor: isDarkMode ? "#222" : "#fff",
+                      borderColor: isDarkMode ? "#333" : "#ddd",
+                    }}
+                    zIndex={3000}
+                    zIndexInverse={1000}
+                  />
+                ) : (
                   <Text
                     style={[
                       styles.detailsAns,
@@ -377,22 +505,68 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                   >
                     {userDetails.gender}
                   </Text>
-                </View>
+                )}
               </View>
-              <View style={styles.divider} />
+            </View>
+            <View style={styles.divider} />
 
-              {/* Date of Birth */}
-              <View style={styles.detailRow}>
-                {iconMap.dob}
-                <View style={styles.detailTextCtn}>
-                  <Text
-                    style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
-                    ]}
-                  >
-                    Date of Birth
-                  </Text>
+            {/* Date of Birth */}
+            <View style={styles.detailRow}>
+              {iconMap.dob}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Date of Birth
+                </Text>
+                {isEditing ? (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => setShowDatePicker(true)}
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#f9f9f9", // off-white for light mode
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                          justifyContent: "center",
+                        },
+                      ]}
+                    >
+                      <Text style={{ color: isDarkMode ? "#fff" : "#222" }}>
+                        {tempDetails.dob === "None"
+                          ? "Select Date"
+                          : tempDetails.dob}
+                      </Text>
+                    </TouchableOpacity>
+                    {showDatePicker && (
+                      <DateTimePicker
+                        value={
+                          tempDetails.dob !== "None"
+                            ? new Date(tempDetails.dob)
+                            : new Date(2000, 0, 1)
+                        }
+                        mode="date"
+                        display={
+                          Platform.OS === "ios" ? "spinner" : "default"
+                        }
+                        onChange={(_, selectedDate) => {
+                          setShowDatePicker(false);
+                          if (selectedDate) {
+                            // Format as YYYY-MM-DD
+                            const formatted = selectedDate
+                              .toISOString()
+                              .split("T")[0];
+                            handleFieldChange("dob", formatted);
+                          }
+                        }}
+                        themeVariant={isDarkMode ? "dark" : "light"}
+                      />
+                    )}
+                  </>
+                ) : (
                   <Text
                     style={[
                       styles.detailsAns,
@@ -401,22 +575,53 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                   >
                     {userDetails.dob}
                   </Text>
-                </View>
+                )}
               </View>
-              <View style={styles.divider} />
+            </View>
+            <View style={styles.divider} />
 
-              {/* Blood Type */}
-              <View style={styles.detailRow}>
-                {iconMap.bloodType}
-                <View style={styles.detailTextCtn}>
-                  <Text
-                    style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
-                    ]}
-                  >
-                    Blood Type
-                  </Text>
+            {/* Blood Type */}
+            <View style={styles.detailRow}>
+              {iconMap.bloodType}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Blood Type
+                </Text>
+                {isEditing ? (
+                  <DropDownPicker
+                    open={bloodOpen}
+                    setOpen={setBloodOpen}
+                    value={
+                      tempDetails.bloodType === "None"
+                        ? null
+                        : tempDetails.bloodType
+                    }
+                    setValue={(val) =>
+                      handleFieldChange("bloodType", val() || "None")
+                    }
+                    items={bloodItems}
+                    placeholder="Select Blood Type"
+                    style={{
+                      backgroundColor: isDarkMode ? "#222" : "#f9f9f9",
+                      borderColor: isDarkMode ? "#333" : "#ddd",
+                      minHeight: 44,
+                    }}
+                    textStyle={{
+                      color: isDarkMode ? "#fff" : "#222",
+                    }}
+                    dropDownContainerStyle={{
+                      backgroundColor: isDarkMode ? "#222" : "#fff",
+                      borderColor: isDarkMode ? "#333" : "#ddd",
+                    }}
+                    zIndex={2000}
+                    zIndexInverse={2000}
+                  />
+                ) : (
                   <Text
                     style={[
                       styles.detailsAns,
@@ -425,99 +630,99 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                   >
                     {userDetails.bloodType}
                   </Text>
-                </View>
+                )}
               </View>
-              <View style={styles.divider} />
+            </View>
+            <View style={styles.divider} />
 
-              {/* Medical Condition */}
-              <View style={styles.detailRow}>
-                {iconMap.medicalCondition}
-                <View style={styles.detailTextCtn}>
+            {/* Medical Condition */}
+            <View style={styles.detailRow}>
+              {iconMap.medicalCondition}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Medical Condition
+                </Text>
+                {isEditing ? (
+                  <TextInput
+                    style={[
+                      styles.detailsInput,
+                      {
+                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                        color: isDarkMode ? "#fff" : "#333",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                      },
+                    ]}
+                    placeholder="Medical Condition"
+                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                    value={tempDetails.medicalCondition}
+                    onChangeText={(text) =>
+                      handleFieldChange("medicalCondition", text)
+                    }
+                    returnKeyType="done"
+                  />
+                ) : (
                   <Text
                     style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
                     ]}
                   >
-                    Medical Condition
+                    {userDetails.medicalCondition}
                   </Text>
-                  {isEditing ? (
-                    <TextInput
-                      style={[
-                        styles.detailsInput,
-                        {
-                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                          color: isDarkMode ? "#fff" : "#333",
-                          borderColor: isDarkMode ? "#333" : "#ddd",
-                        },
-                      ]}
-                      placeholder="Medical Condition"
-                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                      value={tempDetails.medicalCondition}
-                      onChangeText={(text) =>
-                        handleFieldChange("medicalCondition", text)
-                      }
-                      returnKeyType="done"
-                    />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.detailsAns,
-                        { color: isDarkMode ? "#fff" : "#000" },
-                      ]}
-                    >
-                      {userDetails.medicalCondition}
-                    </Text>
-                  )}
-                </View>
+                )}
               </View>
-              <View style={styles.divider} />
+            </View>
+            <View style={styles.divider} />
 
-              {/* Allergies */}
-              <View style={styles.detailRow}>
-                {iconMap.allergies}
-                <View style={styles.detailTextCtn}>
+            {/* Allergies */}
+            <View style={styles.detailRow}>
+              {iconMap.allergies}
+              <View style={styles.detailTextCtn}>
+                <Text
+                  style={[
+                    styles.detailsQue,
+                    { color: isDarkMode ? "#bbb" : "grey" },
+                  ]}
+                >
+                  Allergies
+                </Text>
+                {isEditing ? (
+                  <TextInput
+                    style={[
+                      styles.detailsInput,
+                      {
+                        backgroundColor: isDarkMode ? "#222" : "#f9f9f9", // <-- Slightly off-white for light mode
+                        color: isDarkMode ? "#fff" : "#222",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                      },
+                    ]}
+                    placeholder="Allergies"
+                    placeholderTextColor={isDarkMode ? "#888" : "#888"}
+                    value={tempDetails.allergies}
+                    onChangeText={(text) =>
+                      handleFieldChange("allergies", text)
+                    }
+                    returnKeyType="done"
+                  />
+                ) : (
                   <Text
                     style={[
-                      styles.detailsQue,
-                      { color: isDarkMode ? "#bbb" : "grey" },
+                      styles.detailsAns,
+                      { color: isDarkMode ? "#fff" : "#000" },
                     ]}
                   >
-                    Allergies
+                    {userDetails.allergies}
                   </Text>
-                  {isEditing ? (
-                    <TextInput
-                      style={[
-                        styles.detailsInput,
-                        {
-                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                          color: isDarkMode ? "#fff" : "#333",
-                          borderColor: isDarkMode ? "#333" : "#ddd",
-                        },
-                      ]}
-                      placeholder="Allergies"
-                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                      value={tempDetails.allergies}
-                      onChangeText={(text) =>
-                        handleFieldChange("allergies", text)
-                      }
-                      returnKeyType="done"
-                    />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.detailsAns,
-                        { color: isDarkMode ? "#fff" : "#000" },
-                      ]}
-                    >
-                      {userDetails.allergies}
-                    </Text>
-                  )}
-                </View>
+                )}
               </View>
-            </ScrollView>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <StatusBar style={isDarkMode ? "dark" : "light"} />

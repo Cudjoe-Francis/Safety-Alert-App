@@ -3,6 +3,8 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, off, onValue, ref } from "firebase/database";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -19,7 +21,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "..//../themeContext";
 import UserDetailsModal from "../components/user-details";
-import { useNotification } from "../context/NotificationContext"; // Adjust path if needed
+import { useNotification } from "../context/NotificationContext";
 
 type ServiceId = "hospital" | "police" | "fire" | "campus";
 
@@ -30,29 +32,52 @@ interface Service {
 }
 
 const Home: React.FC = () => {
-  // --- State Definitions with Types ---
-  const [isProfileModalVisible, setIsProfileModalVisible] =
-    useState<boolean>(false);
-  const [showHelpPopup, setShowHelpPopup] = useState<boolean>(false);
+  const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
+  const [showHelpPopup, setShowHelpPopup] = useState(false);
   const [activeService, setActiveService] = useState<ServiceId | null>(null);
-  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
-  const [isSosActive, setIsSosActive] = useState<boolean>(false); ///////////////////////////////////////////////////////
-  // State to store the user's current location
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isSosActive, setIsSosActive] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  // State to store any error messages related to location
   const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
+
+  // --- Add this for user's first name ---
+  const [currentUserName, setCurrentUserName] = useState<string>("there");
 
   const { isDarkMode } = useTheme();
   const { addNotification } = useNotification();
 
-  // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Firebase Auth and Database
+  const auth = getAuth();
+  const db = getDatabase();
+
+  // Fetch user's first name on auth state change
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userRef = ref(db, `users/${user.uid}/firstName`);
+        const listener = onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setCurrentUserName(snapshot.val());
+          } else {
+            setCurrentUserName("there");
+          }
+        });
+        // Clean up database listener
+        return () => off(userRef, "value", listener);
+      } else {
+        setCurrentUserName("there");
+      }
+    });
+    // Clean up auth listener
+    return () => unsubscribeAuth();
+  }, []);
+
   // Animated value for SOS pulse animation
   const sosPulse = useRef(new Animated.Value(1)).current;
   const sosAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
-  // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   const animatedBorderColor = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
@@ -260,7 +285,6 @@ const Home: React.FC = () => {
           { backgroundColor: isDarkMode ? "#000" : "#fff" },
         ]}
       >
-        {/* Pressable to close the help popup when tapping outside */}
         <Pressable onPress={() => setShowHelpPopup(false)} style={{ flex: 1 }}>
           {/* Top Bar: Profile and Find Help */}
           <View style={styles.profile_location_help_ctn}>
@@ -274,9 +298,12 @@ const Home: React.FC = () => {
                     { color: isDarkMode ? "#fff" : "#555" },
                   ]}
                 >
-                  Hello Deep
+                  {/* Use the fetched first name here */}
+                  Hello {currentUserName}
                 </Text>
-                <TouchableOpacity onPress={handleOpenProfileModal}>
+                <TouchableOpacity
+                  onPress={() => setIsProfileModalVisible(true)}
+                >
                   <Text style={styles.see_profile}>See Profile</Text>
                 </TouchableOpacity>
               </View>

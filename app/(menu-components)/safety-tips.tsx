@@ -1,5 +1,14 @@
-import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from "react-native";
+import { useTheme } from "../../themeContext";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import React, { useRef, useState, useCallback } from "react";
 
 const tips = [
   "Always share your location with trusted contacts when heading out.",
@@ -15,10 +24,51 @@ const tips = [
 ];
 
 const SafetyTips = () => {
+  const { theme, isDarkMode } = useTheme();
+
+  const navigation = useNavigation();
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: isDarkMode
+          ? offsetY > 23
+            ? "#121212"
+            : "#000"
+          : "#fff",
+      },
+    });
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({
+        headerStyle: {
+          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
+        },
+      });
+    }, [isDarkMode, navigation])
+  );
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? theme.card : theme.background },
+      ]}
+      contentContainerStyle={styles.content}
+    >
       {tips.map((tip, idx) => (
-        <View key={idx} style={styles.tipBox}>
+        <View
+          key={idx}
+          style={[
+            ,
+            styles.tipBox,
+            { backgroundColor: isDarkMode ? "#f2f2f2" : "#f9f9f9" },
+          ]}
+        >
           <Text style={styles.tipNumber}>{idx + 1}.</Text>
           <Text style={styles.tipText}>{tip}</Text>
         </View>
@@ -37,7 +87,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
- 
+
   tipBox: {
     flexDirection: "row",
     alignItems: "flex-start",

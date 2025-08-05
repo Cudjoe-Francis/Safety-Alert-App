@@ -11,15 +11,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,  NativeScrollEvent,
+  TouchableOpacity,
+  NativeScrollEvent,
   NativeSyntheticEvent,
-
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useTheme } from "../../themeContext";
-
 
 type Contact = {
   id: string;
@@ -36,15 +34,14 @@ export default function EmergencyContactsScreen() {
   const [showInput, setShowInput] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-    const { theme, isDarkMode } = useTheme();
-  
-   const navigation = useNavigation();
+  const { theme, isDarkMode } = useTheme();
 
-   
-     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-       const offsetY = event.nativeEvent.contentOffset.y;
+  const navigation = useNavigation();
 
-navigation.setOptions({
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+
+    navigation.setOptions({
       headerStyle: {
         backgroundColor: isDarkMode
           ? offsetY > 23
@@ -116,7 +113,12 @@ navigation.setOptions({
   };
 
   return (
-    <View style={{ flex: 1,  backgroundColor: isDarkMode? theme.card : theme.background  }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isDarkMode ? theme.card : theme.background,
+      }}
+    >
       {/* Movable Floating + button */}
       {!showInput && (
         <Animated.View

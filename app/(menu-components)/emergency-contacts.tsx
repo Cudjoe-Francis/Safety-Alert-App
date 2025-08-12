@@ -1,22 +1,40 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState, useCallback } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import {
+  arrayRemove,
+  arrayUnion,
+  doc,
+  getFirestore,
+  onValue,
+  push,
+  ref,
+  remove,
+  set,
+  updateDoc,
+} from "firebase/database";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
   FlatList,
   KeyboardAvoidingView,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   PanResponder,
   Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   View,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import {
+  GestureHandlerRootView,
+  RectButton,
+  Swipeable,
+} from "react-native-gesture-handler";
+import { auth, database } from "../../firebaseConfig";
 import { useTheme } from "../../themeContext";
 
 type Contact = {
@@ -74,7 +92,15 @@ export default function EmergencyContactsScreen() {
     })
   ).current;
 
-  const addContact = () => {
+  function formatGhanaNumber(number: string): string {
+    let cleaned = number.replace(/\D/g, "");
+    if (cleaned.startsWith("0")) {
+      cleaned = cleaned.substring(1);
+    }
+    return `+233${cleaned}`;
+  }
+
+  const addContact = async () => {
     if (!name || !phone || !relationship) {
       Alert.alert("Missing Info", "Please fill in all fields");
       return;
@@ -85,15 +111,34 @@ export default function EmergencyContactsScreen() {
       return;
     }
 
-    setContacts([
-      ...contacts,
-      {
-        id: Date.now().toString(),
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Error", "User not authenticated");
+      return;
+    }
+
+    // Format the phone number before saving
+    const formattedPhone = formatGhanaNumber(phone);
+
+    const contactsRef = ref(database, `users/${user.uid}/emergencyContacts`);
+    const newContactRef = push(contactsRef);
+    await set(newContactRef, {
+      id: newContactRef.key,
+      name,
+      phone: formattedPhone, // Save formatted number
+      relationship,
+    });
+
+    const firestore = getFirestore();
+    const userDocRef = doc(firestore, "users", user.uid);
+    await updateDoc(userDocRef, {
+      emergencyContacts: arrayUnion({
+        id: newContactRef.key,
         name,
-        phone,
+        phone: formattedPhone,
         relationship,
-      },
-    ]);
+      }),
+    });
 
     setName("");
     setPhone("");
@@ -105,157 +150,203 @@ export default function EmergencyContactsScreen() {
     setConfirmDeleteId(id);
   };
 
-  const handleDeleteContact = () => {
+  const handleDeleteContact = async () => {
     if (confirmDeleteId) {
-      setContacts(contacts.filter((contact) => contact.id !== confirmDeleteId));
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const contactRef = ref(
+        database,
+        `users/${user.uid}/emergencyContacts/${confirmDeleteId}`
+      );
+      await remove(contactRef);
+
+      const firestore = getFirestore();
+      const userDocRef = doc(firestore, "users", user.uid);
+      await updateDoc(userDocRef, {
+        emergencyContacts: arrayRemove({
+          id: confirmDeleteId,
+          name,
+          phone,
+          relationship,
+        }),
+      });
+
       setConfirmDeleteId(null);
     }
   };
 
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: isDarkMode ? theme.card : theme.background,
-      }}
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const contactsRef = ref(database, `users/${user.uid}/emergencyContacts`);
+    const unsubscribe = onValue(contactsRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      // Convert object to array
+      setContacts(Object.values(data));
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // --- Swipeable Delete Button ---
+  const renderRightActions = (item: Contact) => (
+    <RectButton
+      style={styles.deleteButton}
+      onPress={() => confirmRemoveContact(item.id)}
     >
-      {/* Movable Floating + button */}
-      {!showInput && (
-        <Animated.View
-          style={[styles.floatingAddButton, pan.getLayout()]}
-          {...panResponder.panHandlers}
-        >
-          <TouchableOpacity onPress={() => setShowInput(true)}>
-            <Ionicons name="add-circle" size={44} color="#ff5330" />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
+      <Ionicons name="trash" size={24} color="#fff" />
+      <Text style={styles.deleteText}>Delete</Text>
+    </RectButton>
+  );
 
-      {/* Input Modal */}
-      {showInput && (
-        <KeyboardAvoidingView
-          style={styles.inputOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <View style={styles.inputContainer}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowInput(false)}
-            >
-              <Ionicons name="close" size={24} color="#ff5330" />
-            </TouchableOpacity>
-            <Text style={styles.label}>Name</Text>
-            <TextInput
-              placeholder="Full Name"
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-            />
-
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              placeholder="Phone Number"
-              style={styles.input}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-            <Text style={styles.label}>Relationship</Text>
-            <TextInput
-              placeholder="e.g. Mother, Friend"
-              style={styles.input}
-              value={relationship}
-              onChangeText={setRelationship}
-            />
-            <TouchableOpacity style={styles.addButton} onPress={addContact}>
-              <Ionicons
-                name="add-circle"
-                size={20}
-                color="#fff"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.addButtonText}>Add Contact</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        visible={!!confirmDeleteId}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setConfirmDeleteId(null)}
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDarkMode ? theme.card : theme.background,
+        }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Ionicons
-              name="warning"
-              size={40}
-              color="#ff5330"
-              style={{ alignSelf: "center" }}
-            />
-            <Text style={styles.modalTitle}>Delete Contact?</Text>
-            <Text style={styles.modalText}>
-              Are you sure you want to delete this contact?
-            </Text>
-            <View style={styles.modalActions}>
+        {/* Movable Floating + button */}
+        {!showInput && (
+          <Animated.View
+            style={[styles.floatingAddButton, pan.getLayout()]}
+            {...panResponder.panHandlers}
+          >
+            <TouchableOpacity onPress={() => setShowInput(true)}>
+              <Ionicons name="add-circle" size={44} color="#ff5330" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+
+        {/* Input Modal */}
+        {showInput && (
+          <KeyboardAvoidingView
+            style={styles.inputOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <View style={styles.inputContainer}>
               <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#ff5330" }]}
-                onPress={handleDeleteContact}
+                style={styles.closeButton}
+                onPress={() => setShowInput(false)}
               >
-                <Text style={styles.modalBtnText}>Delete</Text>
+                <Ionicons name="close" size={24} color="#ff5330" />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-                onPress={() => setConfirmDeleteId(null)}
-              >
-                <Text style={[styles.modalBtnText, { color: "#333" }]}>
-                  Cancel
-                </Text>
+              <Text style={styles.label}>Name</Text>
+              <TextInput
+                placeholder="Full Name"
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+              />
+
+              <Text style={styles.label}>Phone Number</Text>
+              <TextInput
+                placeholder="Phone Number"
+                style={styles.input}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+              <Text style={styles.label}>Relationship</Text>
+              <TextInput
+                placeholder="e.g. Mother, Friend"
+                style={styles.input}
+                value={relationship}
+                onChangeText={setRelationship}
+              />
+              <TouchableOpacity style={styles.addButton} onPress={addContact}>
+                <Ionicons
+                  name="add-circle"
+                  size={20}
+                  color="#fff"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.addButtonText}>Add Contact</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
+          </KeyboardAvoidingView>
+        )}
 
-      <FlatList
-        data={contacts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.contactItem}>
-            <View style={styles.contactInfo}>
+        {/* Delete Confirmation Modal */}
+        <Modal
+          visible={!!confirmDeleteId}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setConfirmDeleteId(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
               <Ionicons
-                name="person-circle"
-                size={32}
+                name="warning"
+                size={40}
                 color="#ff5330"
-                style={{ marginRight: 10 }}
+                style={{ alignSelf: "center" }}
               />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.contactName}>{item.name}</Text>
-                <Text style={styles.contactPhone}>{item.phone}</Text>
-                <Text style={styles.contactRelationship}>
-                  {item.relationship}
-                </Text>
+              <Text style={styles.modalTitle}>Delete Contact?</Text>
+              <Text style={styles.modalText}>
+                Are you sure you want to delete this contact?
+              </Text>
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: "#ff5330" }]}
+                  onPress={handleDeleteContact}
+                >
+                  <Text style={styles.modalBtnText}>Delete</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
+                  onPress={() => setConfirmDeleteId(null)}
+                >
+                  <Text style={[styles.modalBtnText, { color: "#333" }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity onPress={() => confirmRemoveContact(item.id)}>
-              <Ionicons name="trash" size={24} color="#ff5330" />
-            </TouchableOpacity>
           </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="people-circle-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No contacts added yet.</Text>
-            <Text style={styles.emptySubText}>
-              Add trusted contacts to be notified in case of emergency.
-            </Text>
-          </View>
-        }
-        contentContainerStyle={{ flexGrow: 1, paddingTop: 80 }}
-      />
-    </View>
+        </Modal>
+
+        <FlatList
+          data={contacts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Swipeable renderRightActions={() => renderRightActions(item)}>
+              <View style={styles.contactItem}>
+                <View style={styles.contactInfo}>
+                  <Ionicons
+                    name="person-circle"
+                    size={32}
+                    color="#ff5330"
+                    style={{ marginRight: 10 }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.contactName}>{item.name}</Text>
+                    <Text style={styles.contactPhone}>{item.phone}</Text>
+                    <Text style={styles.contactRelationship}>
+                      {item.relationship}
+                    </Text>
+                  </View>
+                </View>
+                {/* Remove the old delete button here */}
+              </View>
+            </Swipeable>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="people-circle-outline" size={64} color="#ccc" />
+              <Text style={styles.emptyText}>No contacts added yet.</Text>
+              <Text style={styles.emptySubText}>
+                Add trusted contacts to be notified in case of emergency.
+              </Text>
+            </View>
+          }
+          contentContainerStyle={{ flexGrow: 1, paddingTop: 80 }}
+        />
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -430,5 +521,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: "#ff5330",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 90,
+    borderRadius: 12,
+    marginVertical: 8,
+    flexDirection: "row",
+  },
+  deleteText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 });

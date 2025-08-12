@@ -1,93 +1,58 @@
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
 import {
-  Text,
-  View,
+  ActivityIndicator,
+  Linking,
   StyleSheet,
-  Alert,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import * as Location from "expo-location";
-import { database } from "..//..//firebaseConfig";
-import { ref, set } from "firebase/database";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useTheme } from "../../themeContext";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { useState, useCallback, useEffect } from "react";
+import { getCurrentLocation } from "../../utils/getLocation";
+import { reverseGeocode } from "../../utils/reverseGeocode";
 
 const LocationTracker = () => {
-  const [location, setLocationState] = useState<Location.LocationObject | null>(
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
-
+  const [address, setAddress] = useState<string>("");
+  const [loading, setLoading] = useState(true);
   const { theme, isDarkMode } = useTheme();
 
-  const navigation = useNavigation();
+  useEffect(() => {
+    async function fetchLocation() {
+      setLoading(true);
+      try {
+        const loc = await getCurrentLocation();
+        setLocation(loc);
+        const addr = await reverseGeocode(loc.lat, loc.lng);
+        setAddress(addr);
+      } catch (err) {
+        setAddress("Unable to get location");
+      }
+      setLoading(false);
+    }
+    fetchLocation();
+  }, []);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
+  const handleShare = async () => {
+    if (!location) return;
+    const msg = `My current location: ${address}\nhttps://maps.google.com/?q=${location.lat},${location.lng}`;
+    const urlWhatsApp = `whatsapp://send?text=${encodeURIComponent(msg)}`;
+    const urlSMS = `sms:?body=${encodeURIComponent(msg)}`;
+    const urlEmail = `mailto:?subject=My Location&body=${encodeURIComponent(
+      msg
+    )}`;
 
-    navigation.setOptions({
-      headerStyle: {
-        backgroundColor: isDarkMode
-          ? offsetY > 23
-            ? "#121212"
-            : "#000"
-          : "#fff",
-      },
+    // Show options
+    Linking.openURL(urlWhatsApp).catch(() => {
+      Linking.openURL(urlSMS).catch(() => {
+        Linking.openURL(urlEmail);
+      });
     });
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        headerStyle: {
-          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
-        },
-      });
-    }, [isDarkMode, navigation])
-  );
-
-  useEffect(() => {
-    let locationSubscription: Location.LocationSubscription;
-
-    const startTracking = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission denied",
-          "Enable location permission to continue."
-        );
-        return;
-      }
-
-      locationSubscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 3000, // every 3 seconds
-          distanceInterval: 1, // every 1 meter moved
-        },
-        (loc) => {
-          setLocationState(loc);
-          const { latitude, longitude } = loc.coords;
-
-          // Send location to Firebase under test user ID
-          const locationRef = ref(database, "users/USER_123/location");
-          set(locationRef, {
-            latitude,
-            longitude,
-            timestamp: Date.now(),
-          });
-        }
-      );
-    };
-
-    startTracking();
-
-    return () => {
-      if (locationSubscription) {
-        locationSubscription.remove();
-      }
-    };
-  }, []);
 
   return (
     <View
@@ -96,22 +61,46 @@ const LocationTracker = () => {
         { backgroundColor: isDarkMode ? theme.card : theme.background },
       ]}
     >
-      <Text style={[styles.title, { color: isDarkMode ? "#fff" : "#000" }]}>
-        Real-Time Location Tracker
-      </Text>
-      {location ? (
-        <>
-          <Text style={{ color: isDarkMode ? "#fff" : "#000" }}>
-            Latitude: {location.coords.latitude}
-          </Text>
-          <Text style={{ color: isDarkMode ? "#fff" : "#000" }}>
-            Longitude: {location.coords.longitude}
-          </Text>
-        </>
+      <Text style={styles.title}>Your Current Location</Text>
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#121a68"
+          style={{ marginTop: 40 }}
+        />
       ) : (
-        <Text style={{ color: isDarkMode ? "#fff" : "#000" }}>
-          Getting location...
-        </Text>
+        <>
+          <Text style={styles.address}>{address}</Text>
+          {location && (
+            <MapView
+              style={styles.map}
+              provider={PROVIDER_GOOGLE}
+              region={{
+                latitude: location.lat,
+                longitude: location.lng,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+              showsUserLocation
+              showsMyLocationButton
+              zoomEnabled
+              scrollEnabled
+              pitchEnabled
+              rotateEnabled
+              mapType="standard"
+            >
+              <Marker
+                coordinate={{ latitude: location.lat, longitude: location.lng }}
+                title="You are here"
+                description={address}
+              />
+            </MapView>
+          )}
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+            <Ionicons name="share-social" size={22} color="#fff" />
+            <Text style={styles.shareText}>Share Location</Text>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
@@ -120,13 +109,29 @@ const LocationTracker = () => {
 export default LocationTracker;
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    borderRadius: 10,
-    margin: 10,
-  },
+  container: { flex: 1, padding: 20, borderRadius: 10, margin: 10 },
   title: {
     fontSize: 18,
     fontWeight: "bold",
+    marginBottom: 10,
+    color: "#222",
+  },
+  address: { fontSize: 15, color: "#444", marginBottom: 12 },
+  map: { width: "100%", height: 320, borderRadius: 14, marginBottom: 18 },
+  shareBtn: {
+    flexDirection: "row",
+    backgroundColor: "#121a68",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    elevation: 2,
+  },
+  shareText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 8,
   },
 });

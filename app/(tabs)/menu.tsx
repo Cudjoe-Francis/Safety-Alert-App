@@ -43,6 +43,9 @@ const Menu = () => {
       navigation.setOptions({
         headerStyle: {
           backgroundColor: isDarkMode ? "#000" : "#fff",
+          // borderBottomWidth: 0,
+          // borderWidth: 5,
+          // borderBottomColor: isDarkMode ? "#121212" : "#ddd",
         },
       });
     }, [isDarkMode, navigation])

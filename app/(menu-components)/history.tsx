@@ -1,49 +1,88 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useCallback} from "react";
-import { FlatList, StyleSheet, Text, View ,
-    NativeScrollEvent,
-  NativeSyntheticEvent,
-
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import { getAuth } from "firebase/auth";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { firestore } from "../../firebaseConfig";
 import { useTheme } from "../../themeContext";
+import { getUserHistory } from "../../utils/getUserHistory";
 
-type HistoryItem = {
-  id: string;
-  type: string;
-  timestamp: string;
-  location: string;
-  audioUrl?: string;
+const serviceColors: Record<string, string> = {
+  police: "#121a68",
+  hospital: "#008000",
+  fire: "red",
+  campus: "#5d3fd3",
+  incident: "#ff5330",
 };
 
-const mockHistory: HistoryItem[] = [
-  // Example data, replace with real data from Firestore
-  // {
-  //   id: '1',
-  //   type: 'SOS Alert',
-  //   timestamp: '2025-07-31 14:22',
-  //   location: 'Accra, Ghana',
-  //   audioUrl: 'https://example.com/audio.mp3',
-  // },
-];
+const serviceIcons: Record<string, any> = {
+  police: "shield",
+  hospital: "medkit",
+  fire: "flame",
+  campus: "school",
+  incident: "alert-circle",
+};
 
 const History = () => {
-  const [history] = useState<HistoryItem[]>(mockHistory);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { theme, isDarkMode } = useTheme();
+  const navigation = useNavigation();
+  const router = useRouter();
 
-  
-        const { theme, isDarkMode } = useTheme();
-    
-   const navigation = useNavigation();
+  useEffect(() => {
+    async function fetchHistory() {
+      setLoading(true);
+      const userAlerts = await getUserHistory(); // Alerts
+      const auth = getAuth();
+      const userId = auth.currentUser?.uid;
+      let incidentReports: any[] = [];
+      if (userId) {
+        const incidentQuery = query(
+          collection(firestore, "incidentReports"),
+          where("userId", "==", userId)
+        );
+        const incidentSnapshot = await getDocs(incidentQuery);
+        incidentReports = incidentSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+          type: "incident",
+        }));
+      }
+      // Combine and sort by time (latest first)
+      const allHistory = [
+        ...userAlerts.map((h) => ({ ...h, type: h.serviceType })),
+        ...incidentReports,
+      ].sort((a, b) => b.time?.seconds - a.time?.seconds);
+      setHistory(allHistory);
+      setLoading(false);
+    }
+    fetchHistory();
+  }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      navigation.setOptions({
+        headerStyle: {
+          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
+        },
+      });
+    }, [isDarkMode, navigation])
+  );
 
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-
-
-
-navigation.setOptions({
+    navigation.setOptions({
       headerStyle: {
         backgroundColor: isDarkMode
           ? offsetY > 23
@@ -54,91 +93,117 @@ navigation.setOptions({
     });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        headerStyle: {
-          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
-        },
-      });
-    }, [isDarkMode, navigation])
-  );
+  const handleReplyPress = (reply: any) => {
+    router.push({
+      pathname: "/(menu-components)/ReplyDetails",
+      params: { reply: JSON.stringify(reply) },
+    });
+  };
 
-  const renderItem = ({ item }: { item: HistoryItem }) => (
-    <View style={styles.item}>
-      <Text style={styles.type}>{item.type}</Text>
-      <Text style={styles.timestamp}>{item.timestamp}</Text>
-      <Text style={styles.location}>{item.location}</Text>
-      {item.audioUrl && (
-        <View style={styles.audioRow}>
-          <Ionicons name="play-circle-outline" size={24} color="#ff5330" />
-          <Text style={styles.audioText}>Listen to audio</Text>
-        </View>
-      )}
+  const handleDeleteHistory = async (alertId: string) => {
+    try {
+      // Delete all replies under this alert
+      const repliesRef = collection(firestore, "alerts", alertId, "replies");
+      const repliesSnapshot = await getDocs(repliesRef);
+      for (const replyDoc of repliesSnapshot.docs) {
+        await deleteDoc(
+          doc(firestore, "alerts", alertId, "replies", replyDoc.id)
+        );
+      }
+      // Delete the alert itself
+      await deleteDoc(doc(firestore, "alerts", alertId));
+      // Remove from local state
+      setHistory((prev) => prev.filter((item) => item.id !== alertId));
+    } catch (error) {
+      console.error("Failed to delete alert from Firestore:", error);
+    }
+  };
+
+  const renderItem = ({ item }: { item: any }) => (
+    <View
+      style={[
+        styles.card,
+        {
+          borderLeftColor: serviceColors[item.type] || "#888",
+          borderLeftWidth: 6,
+        },
+      ]}
+    >
+      <Ionicons
+        name={serviceIcons[item.type] || "document"}
+        size={28}
+        color={serviceColors[item.type] || "#888"}
+        style={{ marginRight: 12 }}
+      />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.title}>
+          {item.type === "incident"
+            ? "Incident Report"
+            : item.serviceType?.charAt(0).toUpperCase() +
+              item.serviceType?.slice(1)}
+        </Text>
+        <Text style={styles.message} numberOfLines={2}>
+          {item.message}
+        </Text>
+        <Text style={styles.time}>
+          {item.time ? new Date(item.time.seconds * 1000).toLocaleString() : ""}
+        </Text>
+        {item.reply && (
+          <Text style={styles.reply}>
+            Reply: {item.reply.message || "Received"}
+          </Text>
+        )}
+      </View>
+      {/* Optionally, add a button to view full details */}
     </View>
   );
 
   return (
-    <View style={[styles.container  , { backgroundColor: isDarkMode? theme.card : theme.background
- }]}>
-      {history.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="time-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>No history yet</Text>
-          <Text style={styles.emptySubText}>
-            Your emergency alerts and reports will appear here.
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={history}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-        />
-      )}
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: isDarkMode ? theme.card : theme.background },
+        ]}
+      >
+        {loading ? (
+          <Text style={{ textAlign: "center", marginTop: 40 }}>Loading...</Text>
+        ) : (
+          <FlatList
+            data={history}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            onScroll={handleScroll}
+          />
+        )}
+      </View>
+    </GestureHandlerRootView>
   );
 };
 
 export default History;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  item: {
-    backgroundColor: "#f9c2ff",
-    padding: 20,
-    marginVertical: 8,
-    borderRadius: 10,
-    elevation: 2,
-  },
-  type: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#ff5330",
-  },
-  timestamp: {
-    fontSize: 14,
-    color: "gray",
-    marginTop: 4,
-  },
-  location: {
-    fontSize: 16,
-    marginTop: 4,
-  },
-  audioRow: {
+  container: { flex: 1, backgroundColor: "#f9f9f9", paddingTop: 18 },
+  card: {
     flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
+    alignItems: "flex-start",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 18,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
   },
-  audioText: {
-    marginLeft: 8,
-    color: "#ff5330",
-    fontSize: 15,
-  },
+  title: { fontSize: 17, fontWeight: "bold", color: "#222" },
+  message: { fontSize: 15, color: "#444", marginTop: 2 },
+  time: { fontSize: 13, color: "#888", marginTop: 6 },
+  reply: { fontSize: 14, color: "#008000", marginTop: 8, fontWeight: "600" },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -157,5 +222,19 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: "center",
     paddingHorizontal: 20,
+  },
+  deleteButton: {
+    backgroundColor: "#ff5330",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 90,
+    borderRadius: 12,
+    marginVertical: 8,
+    flexDirection: "row",
+  },
+  deleteText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 });

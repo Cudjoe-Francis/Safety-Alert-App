@@ -1,16 +1,11 @@
-// work on darkmode nicely for the headers here 
+// work on darkmode nicely for the headers here
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from "../../themeContext";
 
-
-
-
 const MenuComponents = () => {
+  const { isDarkMode } = useTheme();
 
-    const { isDarkMode } = useTheme();
-  
-    
   return (
     <Stack>
       <Stack.Screen
@@ -20,8 +15,14 @@ const MenuComponents = () => {
           headerTintColor: isDarkMode ? "#fff" : "#000",
           headerShown: true,
           headerLeft: () => (
-            <Ionicons onPress={()=> router.back()} style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
-          )
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
         }}
       />
 
@@ -31,8 +32,15 @@ const MenuComponents = () => {
           title: "Incident Reports",
           headerShown: true,
           headerTintColor: isDarkMode ? "#fff" : "#000",
-          headerLeft: () => (<Ionicons onPress={()=> router.back()} style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
-          )
+          headerLeft: () => (
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
         }}
       />
 
@@ -40,11 +48,17 @@ const MenuComponents = () => {
         name="location-tracker"
         options={{
           title: "Location Tracker",
-                    headerTintColor: isDarkMode ? "#fff" : "#000",
+          headerTintColor: isDarkMode ? "#fff" : "#000",
           headerShown: true,
           headerLeft: () => (
-            <Ionicons onPress={()=> router.back()}  style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
-          )
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
         }}
       />
 
@@ -55,35 +69,70 @@ const MenuComponents = () => {
           headerTintColor: isDarkMode ? "#fff" : "#000",
           headerShown: true,
           headerLeft: () => (
-            <Ionicons onPress={()=> router.back()}  style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
-          )
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
         }}
       />
 
       <Stack.Screen
         name="notifications"
-        options={{ 
-          title: "Notifications", 
+        options={{
+          title: "Notifications",
           headerShown: true,
           headerTintColor: isDarkMode ? "#fff" : "#000",
           headerLeft: () => (
-            <Ionicons onPress={()=> router.back()} style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
-          )
-         }}
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
+        }}
       />
 
       <Stack.Screen
         name="safety-tips"
-        options={{ 
-          title: "Safety Tips", 
+        options={{
+          title: "Safety Tips",
           headerShown: true,
           headerTintColor: isDarkMode ? "#fff" : "#000",
           headerLeft: () => (
-            <Ionicons onPress={()=> router.back()} style={{ marginRight: 16 }} name="chevron-back" size={24} color="#ff5330" />
-          )
-         }}
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
+        }}
       />
 
+      <Stack.Screen
+        name="ReplyDetails"
+        options={{
+          title: "Reply Details",
+          headerTintColor: isDarkMode ? "#fff" : "#000",
+          headerShown: true,
+          headerLeft: () => (
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
+        }}
+      />
     </Stack>
   );
 };

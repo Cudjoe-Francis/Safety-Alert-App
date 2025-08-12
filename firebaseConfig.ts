@@ -1,18 +1,18 @@
-// firebaseConfig.ts
 import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
 import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
+import { getFirestore } from "firebase/firestore";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAPSS-f63b7wb3-VEPvnBRe-0QnHU2HDPw",
-  authDomain: "safety-alert-app-da762.firebaseapp.com",
-  databaseURL: "https://safety-alert-app-da762-default-rtdb.firebaseio.com", // ✅ Add this line
-  projectId: "safety-alert-app-da762",
-  storageBucket: "safety-alert-app-da762.appspot.com", // fixed typo: `.app` → `.appspot.com`
-  messagingSenderId: "219645090443",
-  appId: "1:219645090443:web:fa2c9689e25731afd4d28e",
+export const firebaseConfig = {
+  apiKey: "AIzaSyBZqzDoNT5FILS1PHA98_DlZERgbN5Qrf0",
+  authDomain: "safety-alert-app-3aa05.firebaseapp.com",
+  projectId: "safety-alert-app-3aa05",
+  storageBucket: "safety-alert-app-3aa05.appspot.com",
+  messagingSenderId: "619085971303",
+  appId: "1:619085971303:web:9063a751b9deefb7cc39c2",
 };
 
 const app = initializeApp(firebaseConfig);
 export const database = getDatabase(app);
 export const auth = getAuth(app);
+export const firestore = getFirestore(app);

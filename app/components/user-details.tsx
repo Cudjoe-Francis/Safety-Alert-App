@@ -1,4 +1,5 @@
 import Entypo from "@expo/vector-icons/Entypo";
+
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -7,6 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 import { StatusBar } from "expo-status-bar";
 import { getAuth } from "firebase/auth";
 import { getDatabase, onValue, ref } from "firebase/database";
+import { doc, getFirestore, setDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,6 +26,7 @@ import {
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { saveUserDetails } from "../../utils/saveUserDetails";
 import { useTheme } from "..//..//themeContext";
 
 interface UserDetailsModalProps {
@@ -56,6 +59,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
     bloodType: "None",
     medicalCondition: "None",
     allergies: "None",
+    profileImageUrl: defaultProfilePictureUri, // <-- Add this line
   });
 
   // State for the profile picture source (using URI for network or base64)
@@ -74,14 +78,18 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
 
   // For DropDownPicker, values must be in arrays
   const genderItems = [
-    { label: "M", value: "M" },
-    { label: "F", value: "F" },
+    { label: "Male", value: "Male" },
+    { label: "Female", value: "Female" },
   ];
   const bloodItems = [
-    { label: "A", value: "A" },
-    { label: "AB", value: "AB" },
-    { label: "B", value: "B" },
-    { label: "O", value: "O" },
+    { label: "A+", value: "A+" },
+    { label: "A-", value: "A-" },
+    { label: "AB+", value: "AB+" },
+    { label: "AB-", value: "AB-" },
+    { label: "B+", value: "B+" },
+    { label: "B-", value: "B-" },
+    { label: "O+", value: "O+" },
+    { label: "O-", value: "O-" },
   ];
 
   // Request permissions on component mount
@@ -126,23 +134,40 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
           bloodType: data.bloodType || "None",
           medicalCondition: data.medicalCondition || "None",
           allergies: data.allergies || "None",
+          profileImageUrl: data.profileImageUrl || defaultProfilePictureUri, // <-- Add this line
         });
       });
     }
   }, []);
 
   // Function to handle toggling between view and edit mode
-  const handleEditToggle = () => {
+  const handleEditToggle = async () => {
     if (isEditing) {
-      // If currently editing, save the temporary changes
-      setUserDetails(tempDetails);
-      setProfileImageSrc(tempProfileImageSrc);
+      // Save changes
+      try {
+        const profileUrl = await saveUserDetails(
+          tempDetails,
+          tempProfileImageSrc
+        );
+        setUserDetails({ ...tempDetails, profileImageUrl: profileUrl });
+        setProfileImageSrc(profileUrl || tempProfileImageSrc);
+        Alert.alert("Saved", "Your details have been updated.");
+
+        // Update Firestore document
+        const firestore = getFirestore();
+        await setDoc(doc(firestore, "users", auth.currentUser.uid), {
+          ...tempDetails,
+          profileImageUrl: profileUrl,
+          email: userDetails.email,
+        });
+      } catch (error) {
+        console.error("Save user details error:", error);
+        Alert.alert("Error", "Failed to save details. Please try again.");
+      }
     } else {
-      // If not editing, copy current details to temporary state for editing
       setTempDetails(userDetails);
       setTempProfileImageSrc(profileImageSrc);
     }
-    // Toggle the editing state
     setIsEditing(!isEditing);
   };
 
@@ -176,8 +201,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
         // Launch image library to pick an image
         let result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true, // Enable cropping
-          aspect: [1, 1], // Crop to a square aspect ratio
+          allowsEditing: true,
+          aspect: [1, 1],
           quality: 1,
         });
 
@@ -392,9 +417,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                     placeholder="Home Address"
                     placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
                     value={tempDetails.address}
-                    onChangeText={(text) =>
-                      handleFieldChange("address", text)
-                    }
+                    onChangeText={(text) => handleFieldChange("address", text)}
                     returnKeyType="done"
                   />
                 ) : (
@@ -472,13 +495,16 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                     open={genderOpen}
                     setOpen={setGenderOpen}
                     value={
-                      tempDetails.gender === "None"
-                        ? null
-                        : tempDetails.gender
+                      tempDetails.gender === "None" ? null : tempDetails.gender
                     }
-                    setValue={(val) =>
-                      handleFieldChange("gender", val() || "None")
-                    }
+                    setValue={(callback) => {
+                      const value = callback(
+                        tempDetails.gender === "None"
+                          ? null
+                          : tempDetails.gender
+                      );
+                      handleFieldChange("gender", value || "None");
+                    }}
                     items={genderItems}
                     placeholder="Select Gender"
                     style={{
@@ -495,6 +521,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                     }}
                     zIndex={3000}
                     zIndexInverse={1000}
+                    listMode="SCROLLVIEW"
                   />
                 ) : (
                   <Text
@@ -549,9 +576,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                             : new Date(2000, 0, 1)
                         }
                         mode="date"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
+                        display={Platform.OS === "ios" ? "spinner" : "default"}
                         onChange={(_, selectedDate) => {
                           setShowDatePicker(false);
                           if (selectedDate) {
@@ -601,9 +626,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                         ? null
                         : tempDetails.bloodType
                     }
-                    setValue={(val) =>
-                      handleFieldChange("bloodType", val() || "None")
-                    }
+                    setValue={(callback) => {
+                      const value = callback(
+                        tempDetails.bloodType === "None"
+                          ? null
+                          : tempDetails.bloodType
+                      );
+                      handleFieldChange("bloodType", value || "None");
+                    }}
                     items={bloodItems}
                     placeholder="Select Blood Type"
                     style={{
@@ -620,6 +650,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
                     }}
                     zIndex={2000}
                     zIndexInverse={2000}
+                    listMode="SCROLLVIEW"
                   />
                 ) : (
                   <Text

@@ -1,172 +1,118 @@
-import { Ionicons } from "@expo/vector-icons";
+import { getAuth } from "firebase/auth";
+import { get, getDatabase, ref } from "firebase/database";
+import React, { useState } from "react";
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,NativeScrollEvent,
-  NativeSyntheticEvent,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-
-import * as Location from "expo-location";
-import { database } from "..//..//firebaseConfig";
-import { ref, set } from "firebase/database";
 import { useTheme } from "../../themeContext";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { useState, useCallback, useEffect } from "react";
-
+import { sendIncidentReport } from "../../utils/sendIncidentReport";
 
 const IncidentReport = () => {
-  const [problem, setProblem] = useState("");
-  const { isDarkMode, theme } = useTheme();
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { theme, isDarkMode } = useTheme();
 
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error("User not authenticated");
 
-  const navigation = useNavigation();
+      // Fetch user details and emergency contacts from Realtime DB
+      const db = getDatabase();
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      const userDetails = snapshot.val();
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
+      if (!userDetails) throw new Error("User details not found");
 
-    navigation.setOptions({
-      headerStyle: {
-        backgroundColor: isDarkMode
-          ? offsetY > 23
-            ? "#121212"
-            : "#000"
-          : "#fff",
-      },
-    });
-  };
+      const reportData = {
+        userId: user.uid,
+        firstName: userDetails.firstName,
+        lastName: userDetails.lastName,
+        homeAddress: userDetails.homeAddress,
+        dateOfBirth: userDetails.dateOfBirth,
+        bloodType: userDetails.bloodType,
+        medicalCondition: userDetails.medicalCondition,
+        allergies: userDetails.allergies,
+        gender: userDetails.gender,
+        phoneNumber: userDetails.phoneNumber,
+        occupation: userDetails.occupation,
+        email: userDetails.email,
+        emergencyContacts: userDetails.emergencyContacts || [],
+        message,
+        serviceType: "police",
+      };
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        headerStyle: {
-          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
-        },
-      });
-    }, [isDarkMode, navigation])
-  );
-
-
-  const handleSubmit = () => {
-    if (problem.trim() === "") {
-      Alert.alert("Missing Details", "Please describe the problem.");
-      return;
+      await sendIncidentReport(reportData);
+      Alert.alert(
+        "Report Submitted",
+        "Your incident report has been sent to the police."
+      );
+      setMessage("");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to submit report.");
     }
-    Alert.alert("Thank you!", "Your incident has been reported.");
-    setProblem("");
+    setLoading(false);
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? theme.card : theme.background },
+      ]}
+    >
+      <Text style={styles.title}>Describe the Incident</Text>
+      <TextInput
+        style={styles.input}
+        multiline
+        numberOfLines={5}
+        placeholder="Type your incident report here..."
+        value={message}
+        onChangeText={setMessage}
+      />
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSubmit}
+        disabled={loading || !message.trim()}
       >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={[styles.label, { color: theme.text }]}>
-            Please describe the issue you’re experiencing. Be as detailed as
-            possible to help us respond quickly.
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDarkMode ? "#23262f" : "#f9f9f9",
-                color: isDarkMode ? "#fff" : "#222",
-                borderColor: "#ff5330",
-              },
-            ]}
-            multiline
-            placeholder="Write your problem here..."
-            placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-            value={problem}
-            onChangeText={setProblem}
-            maxLength={500}
-          />
-          <Text style={[styles.charCount, { color: isDarkMode ? "#888" : "#aaa" }]}>
-            {problem.length}/500
-          </Text>
-          <Pressable
-            style={[
-              styles.button,
-              { opacity: problem.trim() === "" ? 0.6 : 1 },
-              isDarkMode && { backgroundColor: "#ff5330", shadowColor: "#000" },
-            ]}
-            onPress={handleSubmit}
-            disabled={problem.trim() === ""}
-          >
-            <Ionicons
-              name="send"
-              size={20}
-              color="#fff"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.buttonText}>Submit Report</Text>
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <Text style={styles.submitText}>
+          {loading ? "Submitting..." : "Submit Report"}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 export default IncidentReport;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 12,
-    textAlign: "center",
-  },
+  container: { flex: 1, padding: 24 },
+  title: { fontSize: 20, fontWeight: "bold", marginBottom: 16, color: "#222" },
   input: {
-    height: 140,
     borderWidth: 1,
+    borderColor: "#ff5330",
     borderRadius: 10,
-    padding: 12,
-    textAlignVertical: "top",
+    padding: 14,
     fontSize: 16,
-    marginBottom: 8,
-  },
-  charCount: {
-    alignSelf: "flex-end",
-    fontSize: 12,
+    backgroundColor: "#fff",
     marginBottom: 18,
+    minHeight: 100,
+    color: "#222",
   },
-  button: {
-    flexDirection: "row",
-    backgroundColor: "#ff5330",
-    paddingVertical: 12,
+  submitButton: {
+    backgroundColor: "#121a68",
+    paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 5,
-    shadowColor: "#ff5330",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     elevation: 2,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "600",
-    marginLeft: 2,
-  },
+  submitText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });

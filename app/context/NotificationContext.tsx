@@ -1,14 +1,17 @@
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
-interface Notification {
-  id: number;
+export type AppNotification = {
+  id: string;
   message: string;
   timestamp: Date;
-}
+  read: boolean;
+  replyDetails?: any;
+};
 
 interface NotificationContextType {
-  notifications: Notification[];
-  addNotification: (message: string) => void;
+  notifications: AppNotification[];
+  addNotification: (notification: string | AppNotification) => void;
+  markNotificationAsRead: (id: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -23,18 +26,46 @@ export const useNotification = () => {
 };
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
-  const addNotification = (message: string) => {
-    setNotifications((prev) => [
-      ...prev,
-      { id: Date.now(), message, timestamp: new Date() },
-    ]);
+  const addNotification = (notification: string | AppNotification) => {
+    if (typeof notification === "string") {
+      setNotifications((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          message: notification,
+          timestamp: new Date(),
+          read: false,
+        },
+      ]);
+    } else {
+      setNotifications((prev) => [
+        ...prev,
+        {
+          ...notification,
+          id: notification.id || Date.now().toString(),
+          timestamp: notification.timestamp || new Date(),
+          read:
+            typeof notification.read === "boolean" ? notification.read : false,
+        },
+      ]);
+    }
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
   };
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification }}>
+    <NotificationContext.Provider
+      value={{ notifications, addNotification, markNotificationAsRead }}
+    >
       {children}
     </NotificationContext.Provider>
   );
 };
+
+export default NotificationProvider;

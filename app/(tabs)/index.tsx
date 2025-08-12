@@ -1,12 +1,15 @@
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import axios from "axios";
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getDatabase, off, onValue, ref } from "firebase/database";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Easing,
   Linking,
@@ -19,6 +22,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { buildAlertData, EmergencyContact } from "../../utils/buildAlertData";
+import { useListenForReplies } from "../../utils/listenForReplies";
+import { sendAlertToFirestore } from "../../utils/sendAlert";
 import { useTheme } from "..//../themeContext";
 import UserDetailsModal from "../components/user-details";
 import { useNotification } from "../context/NotificationContext";
@@ -32,6 +38,8 @@ interface Service {
 }
 
 const Home: React.FC = () => {
+  useListenForReplies();
+
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [showHelpPopup, setShowHelpPopup] = useState(false);
   const [activeService, setActiveService] = useState<ServiceId | null>(null);
@@ -45,17 +53,20 @@ const Home: React.FC = () => {
 
   // --- Add this for user's first name ---
   const [currentUserName, setCurrentUserName] = useState<string>("there");
+  const [emergencyContacts, setEmergencyContacts] = useState<
+    EmergencyContact[]
+  >([]);
 
   const { isDarkMode } = useTheme();
   const { addNotification } = useNotification();
 
   // Firebase Auth and Database
-  const auth = getAuth();
+  const authFirebase = getAuth();
   const db = getDatabase();
 
   // Fetch user's first name on auth state change
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(authFirebase, (user) => {
       if (user) {
         const userRef = ref(db, `users/${user.uid}/firstName`);
         const listener = onValue(userRef, (snapshot) => {
@@ -145,6 +156,26 @@ const Home: React.FC = () => {
     })();
   }, []); // Empty dependency array means this effect runs once on mount
 
+  // Fetch emergency contacts on auth state change
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(authFirebase, (user) => {
+      if (user) {
+        const contactsRef = ref(db, `users/${user.uid}/emergencyContacts`);
+        const listener = onValue(contactsRef, (snapshot) => {
+          const data = snapshot.val() || {};
+          // Convert object to array
+          setEmergencyContacts(Object.values(data));
+        });
+        // Clean up database listener
+        return () => off(contactsRef, "value", listener);
+      } else {
+        setEmergencyContacts([]);
+      }
+    });
+    // Clean up auth listener
+    return () => unsubscribeAuth();
+  }, []);
+
   const handleOpenProfileModal = (): void => {
     setShowHelpPopup(false); // Close help popup if open
     setIsProfileModalVisible(true);
@@ -155,6 +186,7 @@ const Home: React.FC = () => {
   const handleServicePress = (serviceName: ServiceId): void => {
     if (!activeService) {
       setActiveService(serviceName);
+      handleEmergencyAlert(serviceName); // <-- Add this line
       console.log(`${serviceName} service activated.`);
     }
   };
@@ -174,9 +206,25 @@ const Home: React.FC = () => {
   };
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  const handleSosPress = (): void => {
+  const handleSosPress = async () => {
     setIsSosActive(true);
-    addNotification("SOS activated! Alerting your emergency contacts..."); // <-- Add this line
+    addNotification("SOS activated! Sending SMS to contacts...");
+
+    let message = "Hello, I'm in danger now currently at this location";
+    if (userLocation) {
+      message += `: https://maps.google.com/?q=${userLocation.latitude},${userLocation.longitude}`;
+    }
+
+    try {
+      await axios.post("http://172.20.10.6:5000/send-sos", {
+        contacts: emergencyContacts,
+        message,
+      });
+      addNotification("SMS sent to emergency contacts!");
+    } catch (error) {
+      addNotification("Failed to send SMS.");
+      console.error(error);
+    }
 
     // Start SOS pulse animation and store the animation instance
     sosAnimationRef.current = Animated.loop(
@@ -197,14 +245,14 @@ const Home: React.FC = () => {
     );
     sosAnimationRef.current.start(); // Start the animation
 
-    // Simulate sending notification and stop animation after a delay
+    // Simulate notification and stop animation after a delay
     setTimeout(() => {
       if (sosAnimationRef.current) {
         sosAnimationRef.current.stop(); // Stop the animation using the stored ref
       }
       sosPulse.setValue(1); // Reset scale
       setIsSosActive(false);
-      console.log("Contacts notified successfully.");
+      console.log("SOS pressed. No SMS sent.");
     }, 3000);
   };
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,6 +324,115 @@ const Home: React.FC = () => {
       icon: <MaterialIcons name="security" size={40} color="#5d3fd3" />,
     },
   ];
+
+  const isRecordingRef = useRef(false);
+
+  const handleEmergencyAlert = async (serviceType: ServiceId) => {
+    try {
+      if (isRecordingRef.current) {
+        console.log("Already recording. Please wait.");
+        return;
+      }
+      isRecordingRef.current = true;
+
+      // 1. Get location
+      const location = userLocation
+        ? {
+            lat: userLocation.latitude,
+            lng: userLocation.longitude,
+            address: "Unknown address",
+          }
+        : { lat: 0, lng: 0, address: "Unknown address" };
+
+      // 2. Get user data from Firestore
+      const userId = getAuth().currentUser?.uid;
+      const firestore = getFirestore();
+      const userDoc = await getDoc(doc(firestore, "users", userId));
+      const userDataRaw = userDoc.data();
+
+      if (!userDataRaw) {
+        Alert.alert(
+          "Error",
+          "User profile not found. Please complete your profile first."
+        );
+        isRecordingRef.current = false;
+        return;
+      }
+
+      // Map Firestore data to UserDetails interface
+      const userData: UserDetails = {
+        firstName: userDataRaw.firstName || "",
+        middleName: userDataRaw.middleName || "",
+        lastName: userDataRaw.lastName || "",
+        dateOfBirth: userDataRaw.dateOfBirth || "",
+        bloodType: userDataRaw.bloodType || "",
+        phoneNumber: userDataRaw.phoneNumber || "",
+        email: userDataRaw.email || "",
+        homeAddress: userDataRaw.homeAddress || "",
+        occupation: userDataRaw.occupation || "",
+        gender: userDataRaw.gender || "",
+        medicalCondition: userDataRaw.medicalCondition || "",
+        allergies: userDataRaw.allergies || "",
+      };
+
+      // 3. Build alert data
+      const alert = buildAlertData(
+        userData,
+        emergencyContacts,
+        location,
+        serviceType,
+        "", // audioUrl
+        userId
+      );
+
+      console.log("Sending alert:", alert);
+
+      // 4. Send to Firestore
+      await sendAlertToFirestore(alert);
+
+      console.log("Alert sent to Firestore!");
+
+      addNotification({
+        id: Date.now().toString(),
+        title: "Emergency",
+        message: "Emergency alert sent!",
+        timestamp: new Date().toLocaleString(),
+        read: false,
+      });
+      isRecordingRef.current = false;
+    } catch (error) {
+      isRecordingRef.current = false;
+      console.error("Recording/Firestore error:", error);
+      // Alert for failed alert sending
+      Alert.alert("Error", "Failed to send alert. Please try again.");
+    }
+  };
+
+  // useEffect(() => {
+  //   const unsubscribe = useListenForReplies((reply) => {
+  //     // Send push notification
+  //     Notifications.scheduleNotificationAsync({
+  //       content: {
+  //         title: "Emergency Service Reply",
+  //         body: reply.message,
+  //         data: { replyId: reply.id }, // Pass reply id for navigation
+  //       },
+  //       trigger: null,
+  //     });
+
+  //     // Add to in-app notifications and mark as unread
+  //     addNotification({
+  //       id: reply.id,
+  //       message: reply.message,
+  //       timestamp: new Date(),
+  //       read: false,
+  //       replyDetails: reply,
+  //     });
+  //   });
+  //   return () => {
+  //     if (unsubscribe) unsubscribe();
+  //   };
+  // }, []);
 
   return (
     <SafeAreaProvider>

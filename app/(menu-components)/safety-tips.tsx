@@ -1,111 +1,77 @@
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from "react-native";
-import { useTheme } from "../../themeContext";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import React, { useRef, useState, useCallback } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const tips = [
-  "Always share your location with trusted contacts when heading out.",
-  "Keep emergency contacts updated in your app profile.",
-  "If you feel unsafe, use the SOS button to alert your contacts immediately.",
-  "Stay aware of your surroundings and avoid poorly lit or isolated areas.",
-  "Report suspicious activities or incidents to authorities using the app.",
-  "Keep your phone charged and accessible at all times.",
-  "Know the nearest hospital, police station, and fire service locations.",
-  "Do not hesitate to request help if you feel threatened or unwell.",
-  "Review your medical info and allergies in your profile for emergencies.",
-  "Practice regular check-ins with friends or family when traveling alone.",
+  {
+    icon: "shield-checkmark",
+    title: "Stay Alert",
+    description:
+      "Always be aware of your surroundings, especially in unfamiliar areas.",
+  },
+  {
+    icon: "call",
+    title: "Emergency Contacts",
+    description: "Keep your emergency contacts updated and easily accessible.",
+  },
+  {
+    icon: "walk",
+    title: "Travel Safely",
+    description: "Avoid walking alone at night and use well-lit routes.",
+  },
+  {
+    icon: "medkit",
+    title: "Medical Info",
+    description: "Carry essential medical information and supplies if needed.",
+  },
+  {
+    icon: "location",
+    title: "Share Location",
+    description: "Let trusted people know your location when heading out.",
+  },
 ];
 
-const SafetyTips = () => {
-  const { theme, isDarkMode } = useTheme();
-
-  const navigation = useNavigation();
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-
-    navigation.setOptions({
-      headerStyle: {
-        backgroundColor: isDarkMode
-          ? offsetY > 23
-            ? "#121212"
-            : "#000"
-          : "#fff",
-      },
-    });
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        headerStyle: {
-          backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
-        },
-      });
-    }, [isDarkMode, navigation])
-  );
-
-  return (
-    <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: isDarkMode ? theme.card : theme.background },
-      ]}
-      contentContainerStyle={styles.content}
-    >
-      {tips.map((tip, idx) => (
-        <View
-          key={idx}
-          style={[
-            ,
-            styles.tipBox,
-            { backgroundColor: isDarkMode ? "#f2f2f2" : "#f9f9f9" },
-          ]}
-        >
-          <Text style={styles.tipNumber}>{idx + 1}.</Text>
-          <Text style={styles.tipText}>{tip}</Text>
+const SafetyTipsScreen = () => (
+  <ScrollView
+    style={styles.container}
+    contentContainerStyle={{ paddingBottom: 40 }}
+  >
+    {tips.map((tip, idx) => (
+      <View key={idx} style={styles.card}>
+        <Ionicons
+          name={tip.icon as any}
+          size={32}
+          color="#121a68"
+          style={styles.icon}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>{tip.title}</Text>
+          <Text style={styles.desc}>{tip.description}</Text>
         </View>
-      ))}
-    </ScrollView>
-  );
-};
+      </View>
+    ))}
+  </ScrollView>
+);
 
-export default SafetyTips;
+export default SafetyTipsScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    padding: 20,
-  },
-
-  tipBox: {
+  container: { flex: 1, backgroundColor: "#f9f9f9", paddingTop: 18 },
+  card: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 14,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    padding: 12,
-    elevation: 1,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 18,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
   },
-  tipNumber: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#ff5330",
-    marginRight: 8,
-  },
-  tipText: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
+  icon: { marginRight: 18 },
+  title: { fontSize: 17, fontWeight: "bold", color: "#222" },
+  desc: { fontSize: 15, color: "#444", marginTop: 2 },
 });

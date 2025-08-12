@@ -70,6 +70,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: "#ff5330",
   },
   icon: { marginRight: 18 },
   title: { fontSize: 17, fontWeight: "bold", color: "#222" },

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -40,18 +40,14 @@ const LocationTracker = () => {
   const handleShare = async () => {
     if (!location) return;
     const msg = `My current location: ${address}\nhttps://maps.google.com/?q=${location.lat},${location.lng}`;
-    const urlWhatsApp = `whatsapp://send?text=${encodeURIComponent(msg)}`;
-    const urlSMS = `sms:?body=${encodeURIComponent(msg)}`;
-    const urlEmail = `mailto:?subject=My Location&body=${encodeURIComponent(
-      msg
-    )}`;
-
-    // Show options
-    Linking.openURL(urlWhatsApp).catch(() => {
-      Linking.openURL(urlSMS).catch(() => {
-        Linking.openURL(urlEmail);
+    try {
+      await Share.share({
+        message: msg,
+        title: "Share My Location",
       });
-    });
+    } catch (error) {
+      // Optionally handle error
+    }
   };
 
   return (
@@ -109,7 +105,13 @@ const LocationTracker = () => {
 export default LocationTracker;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, borderRadius: 10, margin: 10 },
+  container: {
+    flex: 1,
+    padding: 20,
+    borderRadius: 10,
+    margin: 10,
+    height: "100%",
+  },
   title: {
     fontSize: 18,
     fontWeight: "bold",
@@ -117,10 +119,10 @@ const styles = StyleSheet.create({
     color: "#222",
   },
   address: { fontSize: 15, color: "#444", marginBottom: 12 },
-  map: { width: "100%", height: 320, borderRadius: 14, marginBottom: 18 },
+  map: { width: "100%", borderRadius: 14, marginBottom: 18, flex: 1 },
   shareBtn: {
     flexDirection: "row",
-    backgroundColor: "#121a68",
+    backgroundColor: "#ff5330",
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",

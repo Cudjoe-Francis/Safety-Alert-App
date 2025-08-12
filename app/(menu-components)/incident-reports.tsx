@@ -32,19 +32,21 @@ const IncidentReport = () => {
 
       if (!userDetails) throw new Error("User details not found");
 
+      const sanitize = (value: any) => (value === undefined ? "" : value);
+
       const reportData = {
         userId: user.uid,
-        firstName: userDetails.firstName,
-        lastName: userDetails.lastName,
-        homeAddress: userDetails.homeAddress,
-        dateOfBirth: userDetails.dateOfBirth,
-        bloodType: userDetails.bloodType,
-        medicalCondition: userDetails.medicalCondition,
-        allergies: userDetails.allergies,
-        gender: userDetails.gender,
-        phoneNumber: userDetails.phoneNumber,
-        occupation: userDetails.occupation,
-        email: userDetails.email,
+        firstName: sanitize(userDetails.firstName),
+        lastName: sanitize(userDetails.lastName),
+        homeAddress: sanitize(userDetails.homeAddress),
+        dateOfBirth: sanitize(userDetails.dateOfBirth),
+        bloodType: sanitize(userDetails.bloodType),
+        medicalCondition: sanitize(userDetails.medicalCondition),
+        allergies: sanitize(userDetails.allergies),
+        gender: sanitize(userDetails.gender),
+        phoneNumber: sanitize(userDetails.phoneNumber),
+        occupation: sanitize(userDetails.occupation),
+        email: sanitize(userDetails.email),
         emergencyContacts: userDetails.emergencyContacts || [],
         message,
         serviceType: "police",
@@ -95,7 +97,7 @@ export default IncidentReport;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24 },
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 16, color: "#222" },
+  title: { fontSize: 18, fontWeight: "bold", marginBottom: 16, color: "#222" },
   input: {
     borderWidth: 1,
     borderColor: "#ff5330",
@@ -108,7 +110,7 @@ const styles = StyleSheet.create({
     color: "#222",
   },
   submitButton: {
-    backgroundColor: "#121a68",
+    backgroundColor: "#ff5330",
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",

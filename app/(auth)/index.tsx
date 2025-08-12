@@ -60,9 +60,9 @@ const FlashScreen = () => {
             </TouchableOpacity>
 
             {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-            <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
+            {/* <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
               <Text style={{ fontSize: 40 }}>Home</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
           </View>
         </View>

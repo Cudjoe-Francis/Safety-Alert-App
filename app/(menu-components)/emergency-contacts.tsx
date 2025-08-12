@@ -29,13 +29,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  GestureHandlerRootView,
-  RectButton,
-  Swipeable,
-} from "react-native-gesture-handler";
 import { auth, database } from "../../firebaseConfig";
 import { useTheme } from "../../themeContext";
+import {
+  GestureHandlerRootView,
+  Swipeable,
+  RectButton,
+} from "react-native-gesture-handler";
 
 type Contact = {
   id: string;

@@ -318,29 +318,57 @@ const NotificationScreen = () => {
     AsyncStorage.setItem("notifications", JSON.stringify(notifications));
   }
 
-  // const { notifications } = useNotification();
-
-  const renderItem = ({ item }: { item: NotificationItem }) => (
-    <View style={styles.card}>
-      <Ionicons
-        name={item.type === "incident-reply" ? "alert-circle" : "chatbox"}
-        size={28}
-        color={item.type === "incident-reply" ? "#ff5330" : "#121a68"}
-        style={{ marginRight: 12 }}
-      />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>
-          {item.type === "incident-reply"
-            ? "Police Reply (Incident Report)"
-            : "Emergency Service Reply"}
-        </Text>
-        <Text style={styles.message}>{item.message}</Text>
-        <Text style={styles.time}>
-          {item.timestamp ? new Date(item.timestamp).toLocaleString() : ""}
-        </Text>
+  const renderItem = ({ item }: { item: NotificationItem }) => {
+    let displayTime = "";
+    if (item.timestamp) {
+      // If it's a Firestore Timestamp object
+      if (
+        typeof item.timestamp === "object" &&
+        typeof item.timestamp.toDate === "function"
+      ) {
+        displayTime = item.timestamp.toDate().toLocaleString();
+      } else if (
+        typeof item.timestamp === "string" ||
+        typeof item.timestamp === "number"
+      ) {
+        // If it's a string or number (ISO or epoch)
+        displayTime = new Date(item.timestamp).toLocaleString();
+      }
+    }
+    return (
+      <View style={styles.notificationItem}>
+        <View style={styles.iconCtn}>
+          <Ionicons
+            name={
+              item.type === "incident-reply"
+                ? "document-text"
+                : item.replyDetails
+                ? "chatbubble-ellipses"
+                : "alert-circle"
+            }
+            size={28}
+            color={
+              item.type === "incident-reply"
+                ? "#008080"
+                : item.replyDetails
+                ? "#121a68"
+                : "#ff5330"
+            }
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.notificationTitle}>{item.title}</Text>
+          <Text style={styles.notificationMessage}>
+            {typeof item.message === "string"
+              ? item.message
+              : JSON.stringify(item.message)}
+          </Text>
+          <Text style={styles.notificationTimestamp}>{displayTime}</Text>
+        </View>
+        {!item.read && <View style={styles.unreadDot} />}
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -417,7 +445,7 @@ const styles = StyleSheet.create({
   },
   reply: {
     borderLeftWidth: 4,
-    borderLeftColor: "#121a68",
+    borderLeftColor: "#ff5330",
   },
   alert: {
     borderLeftWidth: 4,

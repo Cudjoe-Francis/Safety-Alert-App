@@ -13,7 +13,7 @@ import { useTheme } from "../../themeContext";
 import { getCurrentLocation } from "../../utils/getLocation";
 import { reverseGeocode } from "../../utils/reverseGeocode";
 
-const LocationTracker = () => {
+export default function LocationTracker () {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -102,7 +102,7 @@ const LocationTracker = () => {
   );
 };
 
-export default LocationTracker;
+// export default LocationTracker;
 
 const styles = StyleSheet.create({
   container: {

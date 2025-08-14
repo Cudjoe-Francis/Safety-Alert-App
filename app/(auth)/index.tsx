@@ -13,7 +13,7 @@ import { push } from "expo-router/build/global-state/routing";
 import { router } from "expo-router";
 
 const googleLogo = require("..//../assets/images/google.png");
-const instagramLogo = require("..//../assets/images/instagram.jpeg");
+const appleLogo = require("..//../assets/images/images.png");
 const facebookLogo = require("..//../assets/images/facebook.png");
 
 const backgroundImage = require("..//../assets/images/flashBackground.png");
@@ -48,21 +48,21 @@ const FlashScreen = () => {
 
           <View style={styles.optionContainer}>
             <TouchableOpacity style={styles.icon}>
-              <Image source={facebookLogo} style={styles.img} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.icon}>
-              <Image source={instagramLogo} style={styles.img} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.icon}>
               <Image source={googleLogo} style={styles.img} />
             </TouchableOpacity>
 
+            <TouchableOpacity style={[styles.icon, {  }]}>
+              <Image source={appleLogo} style={styles.img} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.icon}>
+              <Image source={facebookLogo} style={styles.img} />
+            </TouchableOpacity>
+
             {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-            {/* <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
+            <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
               <Text style={{ fontSize: 40 }}>Home</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
             {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
           </View>
         </View>

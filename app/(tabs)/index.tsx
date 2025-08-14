@@ -1,6 +1,7 @@
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
@@ -50,6 +51,28 @@ const Home: React.FC = () => {
     longitude: number;
   } | null>(null);
   const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Animation for Find Help popup
+  const popupAnim = useRef(new Animated.Value(0)).current;
+  const profileModalAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(popupAnim, {
+      toValue: showHelpPopup ? 1 : 0,
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [showHelpPopup]);
+
+  const popupTranslateY = popupAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-20, 0], // Slide down when opening
+  });
+
+  const popupOpacity = popupAnim;
 
   // --- Add this for user's first name ---
   const [currentUserName, setCurrentUserName] = useState<string>("there");
@@ -176,18 +199,35 @@ const Home: React.FC = () => {
     return () => unsubscribeAuth();
   }, []);
 
-  const handleOpenProfileModal = (): void => {
-    setShowHelpPopup(false); // Close help popup if open
-    setIsProfileModalVisible(true);
-  };
-
   // --- Functions for Service Button Logic with Types ---
-
-  const handleServicePress = (serviceName: ServiceId): void => {
+  const handleServicePress = async (serviceName: ServiceId): Promise<void> => {
     if (!activeService) {
-      setActiveService(serviceName);
-      handleEmergencyAlert(serviceName); // <-- Add this line
-      console.log(`${serviceName} service activated.`);
+      try {
+        const savedTimer = await AsyncStorage.getItem("countdownTimer");
+        const timeInSeconds = savedTimer ? parseInt(savedTimer) : 0;
+
+        setActiveService(serviceName);
+
+        if (timeInSeconds > 0) {
+          setCountdown(timeInSeconds);
+          let remaining = timeInSeconds;
+
+          countdownInterval.current = setInterval(() => {
+            remaining--;
+            setCountdown(remaining);
+            if (remaining <= 0) {
+              clearInterval(countdownInterval.current!);
+              setCountdown(null);
+              handleEmergencyAlert(serviceName);
+            }
+          }, 1000);
+        } else {
+          handleEmergencyAlert(serviceName);
+        }
+      } catch (error) {
+        console.error("Error reading countdown timer:", error);
+        handleEmergencyAlert(serviceName);
+      }
     }
   };
 
@@ -196,16 +236,20 @@ const Home: React.FC = () => {
   };
 
   const handleConfirmCancel = (): void => {
-    console.log(`${activeService} service cancelled.`);
+    // Stop countdown and cancel service
+    if (countdownInterval.current) {
+      clearInterval(countdownInterval.current);
+    }
+    setCountdown(null);
     setActiveService(null);
     setShowCancelModal(false);
   };
 
   const handleCloseCancelModal = (): void => {
+    // Just close modal, countdown continues
     setShowCancelModal(false);
   };
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   const handleSosPress = async () => {
     setIsSosActive(true);
     addNotification("SOS activated! Sending SMS to contacts...");
@@ -255,47 +299,26 @@ const Home: React.FC = () => {
       console.log("SOS pressed. No SMS sent.");
     }, 3000);
   };
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  /**
-   * Opens the device's default map application with a search query.
-   * Prioritizes Google Maps if installed, otherwise falls back to default maps.
-   * @param query The search term (e.g., "police station", "hospital").
-   */
   const openMapsForQuery = async (query: string): Promise<void> => {
     const encodedQuery = encodeURIComponent(query);
     let url: string = "";
 
     if (Platform.OS === "ios") {
-      // Try to open Google Maps first on iOS
-      const googleMapsUrl = userLocation
-        ? `comgooglemaps://?q=${encodedQuery}&center=${userLocation.latitude},${userLocation.longitude}`
-        : `comgooglemaps://?q=${encodedQuery}`;
-
+      const googleMapsUrl = `comgooglemaps://?q=${encodedQuery}&near=${userLocation?.latitude},${userLocation?.longitude}`;
       const canOpenGoogleMaps = await Linking.canOpenURL(googleMapsUrl);
 
       if (canOpenGoogleMaps) {
         url = googleMapsUrl;
       } else {
-        // Fallback to Apple Maps if Google Maps is not installed
-        url = userLocation
-          ? `http://maps.apple.com/?ll=${userLocation.latitude},${userLocation.longitude}&q=${encodedQuery}`
-          : `http://maps.apple.com/?q=${encodedQuery}`;
-        console.log(
-          "Google Maps not installed on iOS, falling back to Apple Maps."
-        );
+        url = `http://maps.apple.com/?q=${encodedQuery}&near=${userLocation?.latitude},${userLocation?.longitude}`;
       }
     } else {
-      // Android: Google Maps via geo URI (typically defaults to Google Maps)
-      url = userLocation
-        ? `geo:${userLocation.latitude},${userLocation.longitude}?q=${encodedQuery}`
-        : `geo:0,0?q=${encodedQuery}`;
+      url = `geo:${userLocation?.latitude},${userLocation?.longitude}?q=${encodedQuery}`;
     }
 
-    // Attempt to open the URL
     Linking.openURL(url).catch((err) => {
       console.error("An error occurred trying to open maps:", err);
-      // You could add a user-facing message here, e.g., using a custom modal or toast
     });
   };
 
@@ -325,16 +348,8 @@ const Home: React.FC = () => {
     },
   ];
 
-  const isRecordingRef = useRef(false);
-
   const handleEmergencyAlert = async (serviceType: ServiceId) => {
     try {
-      if (isRecordingRef.current) {
-        console.log("Already recording. Please wait.");
-        return;
-      }
-      isRecordingRef.current = true;
-
       // 1. Get location
       const location = userLocation
         ? {
@@ -355,20 +370,19 @@ const Home: React.FC = () => {
           "Error",
           "User profile not found. Please complete your profile first."
         );
-        isRecordingRef.current = false;
         return;
       }
 
-      // Map Firestore data to UserDetails interface
+      // Map Firestore data to UserDetails interface (match your profile modal fields)
       const userData: UserDetails = {
         firstName: userDataRaw.firstName || "",
         middleName: userDataRaw.middleName || "",
         lastName: userDataRaw.lastName || "",
-        dateOfBirth: userDataRaw.dateOfBirth || "",
+        dateOfBirth: userDataRaw.dob || "", // Firestore field should be 'dob'
         bloodType: userDataRaw.bloodType || "",
-        phoneNumber: userDataRaw.phoneNumber || "",
+        phoneNumber: userDataRaw.phone || "", // Firestore field should be 'phone'
         email: userDataRaw.email || "",
-        homeAddress: userDataRaw.homeAddress || "",
+        homeAddress: userDataRaw.address || "", // Firestore field should be 'address'
         occupation: userDataRaw.occupation || "",
         gender: userDataRaw.gender || "",
         medicalCondition: userDataRaw.medicalCondition || "",
@@ -381,7 +395,6 @@ const Home: React.FC = () => {
         emergencyContacts,
         location,
         serviceType,
-        "", // audioUrl
         userId
       );
 
@@ -399,40 +412,11 @@ const Home: React.FC = () => {
         timestamp: new Date().toLocaleString(),
         read: false,
       });
-      isRecordingRef.current = false;
     } catch (error) {
-      isRecordingRef.current = false;
-      console.error("Recording/Firestore error:", error);
-      // Alert for failed alert sending
+      console.error("Firestore error:", error);
       Alert.alert("Error", "Failed to send alert. Please try again.");
     }
   };
-
-  // useEffect(() => {
-  //   const unsubscribe = useListenForReplies((reply) => {
-  //     // Send push notification
-  //     Notifications.scheduleNotificationAsync({
-  //       content: {
-  //         title: "Emergency Service Reply",
-  //         body: reply.message,
-  //         data: { replyId: reply.id }, // Pass reply id for navigation
-  //       },
-  //       trigger: null,
-  //     });
-
-  //     // Add to in-app notifications and mark as unread
-  //     addNotification({
-  //       id: reply.id,
-  //       message: reply.message,
-  //       timestamp: new Date(),
-  //       read: false,
-  //       replyDetails: reply,
-  //     });
-  //   });
-  //   return () => {
-  //     if (unsubscribe) unsubscribe();
-  //   };
-  // }, []);
 
   return (
     <SafeAreaProvider>
@@ -495,7 +479,16 @@ const Home: React.FC = () => {
 
           {/* Find Help Nearby Popup */}
           {showHelpPopup && (
-            <View style={styles.popupAbsoluteContainer}>
+            <Animated.View
+              pointerEvents={showHelpPopup ? "auto" : "none"}
+              style={[
+                styles.popupAbsoluteContainer,
+                {
+                  opacity: popupOpacity,
+                  transform: [{ translateY: popupTranslateY }],
+                },
+              ]}
+            >
               <View style={styles.popup}>
                 {/* Police Station option - opens map with police station search */}
                 <TouchableOpacity
@@ -506,7 +499,7 @@ const Home: React.FC = () => {
                   }}
                 >
                   <MaterialIcons name="security" size={24} color="#ff4330" />
-                  <Text style={styles.popupText}>Police Station</Text>
+                  <Text style={styles.popupText}>Police Stations</Text>
                 </TouchableOpacity>
                 {/* Hospitals option - opens map with hospital search */}
                 <TouchableOpacity
@@ -526,7 +519,7 @@ const Home: React.FC = () => {
                   </Text>
                 )}
               </View>
-            </View>
+            </Animated.View>
           )}
 
           {/* Emergency Assistance Section */}
@@ -574,6 +567,10 @@ const Home: React.FC = () => {
                     onPress={() => handleServicePress(service.id)}
                     disabled={isAnyServiceActive}
                   >
+                    {isThisServiceActive && countdown !== null && (
+                      <Text style={styles.countdown}>{countdown}</Text>
+                    )}
+
                     {service.icon}
                     <Text
                       style={[
@@ -611,7 +608,6 @@ const Home: React.FC = () => {
               Alert your contacts, You are in danger
             </Text>
 
-            {/* ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
             <TouchableOpacity
               style={styles.sosContainer}
               onPress={handleSosPress}
@@ -627,7 +623,6 @@ const Home: React.FC = () => {
                 Alerting your contacts...
               </Text>
             )}
-            {/* ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
           </View>
         </Pressable>
 
@@ -770,7 +765,6 @@ const styles = StyleSheet.create({
     columnGap: 30,
     paddingVertical: 20,
     paddingHorizontal: 20,
-    // backgroundColor: "pink", /////////////////////////////////////////////////////////////
   },
 
   bottomContainer: {
@@ -826,6 +820,30 @@ const styles = StyleSheet.create({
         borderWidth: 1,
       },
     }),
+  },
+
+  // Update countdown style for perfect centering
+  countdown: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,83,48,0.90)",
+    color: "#fff",
+    fontSize: 32,
+    fontWeight: "bold",
+    borderRadius: 30,
+    textAlign: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 6,
+    zIndex: 10,
+    transform: [{ translateX: -30 }, { translateY: -30 }],
   },
 
   assistanceBtnText: {

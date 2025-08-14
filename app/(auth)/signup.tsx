@@ -343,23 +343,6 @@
 //   },
 // });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // import { replace } from "expo-router/build/global-state/routing";
 import { StatusBar } from "expo-status-bar";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
@@ -380,6 +363,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 const SignUp = () => {
   // State variables for form fields
@@ -506,8 +490,11 @@ const SignUp = () => {
         router.replace("/(tabs)");
         console.log("User signed up successfully:", user);
       } catch (error: any) {
-        console.error("Signup failed:", error.message);
-        setEmailError("Signup failed. " + error.message);
+        if (error.code === "auth/email-already-in-use") {
+          alert("Email has already been used. Please sign in.");
+        } else {
+          alert("Signup failed. " + error.message);
+        }
       }
     } else {
       console.log("Validation failed.");
@@ -531,7 +518,7 @@ const SignUp = () => {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
         >
-          <View style={styles.formContainer}>
+          <ScrollView style={styles.formContainer}>
             <Text style={styles.text}>First Name</Text>
             <TextInput
               style={[styles.input, firstNameError ? styles.inputError : null]}
@@ -626,7 +613,7 @@ const SignUp = () => {
                 <Text style={styles.signInText}>Sign In</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
         <StatusBar style="light" />
       </View>
@@ -673,11 +660,13 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     fontSize: 20,
     borderColor: "#949494",
-    paddingTop: 10,
+    paddingVertical: Platform.OS === "ios" ? 6 : 4,
   },
+
   inputError: {
     borderColor: "red",
   },
+  
   errorText: {
     color: "red",
     fontSize: 12,

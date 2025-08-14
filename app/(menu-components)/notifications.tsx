@@ -187,7 +187,10 @@ const NotificationScreen = () => {
     if (item.replyDetails) {
       router.push({
         pathname: "/(menu-components)/ReplyDetails",
-        params: { reply: JSON.stringify(item.replyDetails) },
+        params: {
+          reply: JSON.stringify(item.replyDetails),
+          time: item.timestamp, // Pass the time received
+        },
       });
     } else {
       console.log("No reply details available.");
@@ -201,9 +204,7 @@ const NotificationScreen = () => {
       return updated;
     });
 
-    // Also delete from Firestore if it's a reply
     try {
-      // Find the notification to get alertId and replyId
       const notification = notifications.find((n) => n.id === id);
       if (
         notification &&
@@ -261,12 +262,7 @@ const NotificationScreen = () => {
               : JSON.stringify(item.message)}
           </Text>
           <Text style={styles.notificationTimestamp}>
-            {typeof item.timestamp === "string"
-              ? item.timestamp
-              : typeof item.timestamp === "object" &&
-                typeof item.timestamp.toLocaleString === "function"
-              ? item.timestamp.toLocaleString()
-              : ""}
+            {typeof item.timestamp === "string" ? item.timestamp : ""}
           </Text>
         </View>
         {!item.read && <View style={styles.unreadDot} />}
@@ -290,20 +286,15 @@ const NotificationScreen = () => {
         return prev;
       }
 
+      // Always use the current time when received
+      const receivedTime = new Date().toLocaleString();
+
       const updated = [
         {
           id: reply.id,
           title: "Reply",
           message: reply.message,
-          timestamp:
-            reply.time && typeof reply.time.toDate === "function"
-              ? reply.time.toDate().toLocaleString()
-              : typeof reply.timestamp === "string"
-              ? reply.timestamp
-              : typeof reply.timestamp === "object" &&
-                typeof reply.timestamp.toDate === "function"
-              ? reply.timestamp.toDate().toLocaleString()
-              : new Date().toLocaleString(),
+          timestamp: receivedTime, // <-- Always use current time
           replyDetails: reply,
           read: false,
         },
@@ -394,6 +385,8 @@ const NotificationScreen = () => {
     </GestureHandlerRootView>
   );
 };
+
+export default NotificationScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -500,4 +493,4 @@ const styles = StyleSheet.create({
   time: { fontSize: 13, color: "#888", marginTop: 6 },
 });
 
-export default NotificationScreen;
+

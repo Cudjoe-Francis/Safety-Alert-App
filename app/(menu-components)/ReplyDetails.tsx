@@ -3,12 +3,11 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 const ReplyDetails = () => {
-  const { reply } = useLocalSearchParams();
+  const { reply, time } = useLocalSearchParams();
   const replyObj = reply ? JSON.parse(reply as string) : {};
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Reply Details</Text>
       <Text style={styles.label}>Responder:</Text>
       <Text style={styles.value}>{replyObj.responderName || "Unknown"}</Text>
       <Text style={styles.label}>Station:</Text>
@@ -37,7 +36,8 @@ const ReplyDetails = () => {
         <>
           <Text style={styles.label}>Message:</Text>
           <Text style={styles.value}>{replyObj.message}</Text>
-          <Text style={styles.label}>Time:</Text>
+            <Text style={styles.label}>Received at:</Text>
+            <Text style={styles.value}>{time || ""}</Text>
           <Text style={styles.value}>
             {replyObj.timestamp
               ? new Date(replyObj.timestamp.seconds * 1000).toLocaleString()
@@ -50,10 +50,9 @@ const ReplyDetails = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: "#fff" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
-  label: { fontSize: 16, color: "#888", marginTop: 12 },
-  value: { fontSize: 18, color: "#222", marginTop: 2 },
+  container: { flex: 1, paddingHorizontal: 20, backgroundColor: "#fff" },
+  label: { fontSize: 16, color: "#888", marginTop: 20 },
+  value: { fontSize: 18, color: "#222", marginTop: 6 },
 });
 
 export default ReplyDetails;

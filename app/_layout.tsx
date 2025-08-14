@@ -16,7 +16,7 @@ export default function App() {
   useEffect(() => {
     setTimeout(async () => {
       await SplashScreen.hideAsync();
-    }, 2000);
+    }, 1000);
   }, []);
 
   return (
@@ -25,7 +25,7 @@ export default function App() {
         <ThemeProvider>
           <NotificationProvider>
             <Stack
-              initialRouteName="(tabs)"
+              initialRouteName="(auth)"
               screenOptions={{ headerShown: false }}
             >
               <Stack.Screen name="(auth)" />

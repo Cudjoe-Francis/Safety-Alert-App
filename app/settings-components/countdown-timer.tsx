@@ -1,28 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   Pressable,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useTheme } from "..//../themeContext";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-const timerOptions = ['5 seconds', '10 seconds', '15 seconds', '30 seconds'];
+const timerOptions = ['5 seconds', '10 seconds', '15 seconds', '30 seconds', '120 seconds', '300 seconds'];
 
 const CountdownTimerScreen = () => {
-        const { isDarkMode, theme } = useTheme();
-  
   const router = useRouter();
-  const [selectedTimer, setSelectedTimer] = useState<string | null>('10 seconds');
+  const [selectedTimer, setSelectedTimer] = useState<string | null>(null);
 
-  const handleSelect = (option: string) => {
-    setSelectedTimer(option);
+  // Load saved timer on mount
+  useEffect(() => {
+    const loadTimer = async () => {
+      try {
+        const savedTime = await AsyncStorage.getItem('countdownTimerLabel');
+        if (savedTime) {
+          setSelectedTimer(savedTime);
+        } else {
+          setSelectedTimer('10 seconds');
+        }
+      } catch (error) {
+        console.error('Error loading timer:', error);
+      }
+    };
+    loadTimer();
+  }, []);
+
+  const handleSelect = async (option: string) => {
+    try {
+      setSelectedTimer(option);
+      await AsyncStorage.setItem('countdownTimerLabel', option);
+      const timeInSeconds = parseInt(option);
+      await AsyncStorage.setItem('countdownTimer', timeInSeconds.toString());
+    } catch (error) {
+      console.error('Error saving selected timer:', error);
+    }
   };
 
   const handleSave = () => {
@@ -30,20 +49,16 @@ const CountdownTimerScreen = () => {
       Alert.alert('No time selected', 'Please select a countdown time.');
     } else {
       Alert.alert('Saved', `Countdown set to: ${selectedTimer}`);
+      router.back();
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
-      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
-        <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#ff5330" />
-        </Pressable>
-        <Text  style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Countdown Timer</Text>
-      </View>
+    <View style={styles.container}>
+      
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text   style={[styles.infoText, { color: isDarkMode? '#fff' : '#000' }]}>
+      <View style={styles.content}>
+        <Text style={styles.infoText}>
           When an alert is triggered, a countdown will begin. If not cancelled in time, it will notify the selected security agencies.
         </Text>
 
@@ -59,15 +74,15 @@ const CountdownTimerScreen = () => {
               color="#ff5330"
               style={{ marginRight: 10 }}
             />
-            <Text   style={[styles.optionText, { color: isDarkMode? '#fff' : '#000' }]}>{option}</Text>
+            <Text style={styles.optionText}>{option}</Text>
           </Pressable>
         ))}
 
         <Pressable style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>Save Timer</Text>
         </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 };
 
@@ -78,24 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-  },
+ 
   content: {
     padding: 20,
   },

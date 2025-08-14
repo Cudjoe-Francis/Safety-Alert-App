@@ -5,7 +5,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useNavigation } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -22,17 +22,18 @@ import { useTheme } from "../../themeContext";
 const Settings = () => {
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const navigation = useNavigation();
+  const [showHeaderBorder, setShowHeaderBorder] = useState(false);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-
+    setShowHeaderBorder(offsetY > 23);
     navigation.setOptions({
       headerStyle: {
-        backgroundColor: isDarkMode
-          ? offsetY > 23
-            ? "#121212"
-            : "#000"
-          : "#fff",
+        backgroundColor: isDarkMode ? "#121212" : "#fff",
+        borderBottomWidth: showHeaderBorder ? 0.5 : 0,
+        borderBottomColor: showHeaderBorder ? "#ddd" : "transparent",
+        elevation: showHeaderBorder ? 8 : 0,
+        shadowColor: showHeaderBorder ? "#ff5330" : "transparent",
       },
     });
   };
@@ -41,7 +42,8 @@ const Settings = () => {
     useCallback(() => {
       navigation.setOptions({
         headerStyle: {
-          backgroundColor: isDarkMode ? "#000" : "#fff",
+          backgroundColor: isDarkMode ? "#121212" : "#fff",
+          borderBottomWidth: 0,
         },
       });
     }, [isDarkMode, navigation])
@@ -51,11 +53,15 @@ const Settings = () => {
   const iconBg = (color: string): ViewStyle => ({
     backgroundColor: color,
     borderRadius: 8,
-    width: 30,
-    height: 30,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: 14,
+    shadowColor: color,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
   });
 
   return (
@@ -99,7 +105,11 @@ const Settings = () => {
             ]}
           >
             <View style={iconBg("#ff9800")}>
-              <MaterialCommunityIcons name="bell-alert" size={18} color="#fff" />
+              <MaterialCommunityIcons
+                name="bell-alert"
+                size={18}
+                color="#fff"
+              />
             </View>
             <Text
               style={[styles.single_settings, { color: theme.text, flex: 1 }]}
@@ -143,7 +153,7 @@ const Settings = () => {
           ]}
         >
           <View style={iconBg("#222")}>
-            <Ionicons name="moon" size={18} color="#fff" />
+            <Ionicons name="moon" size={20} color="#fff" />
           </View>
           <Text
             style={[styles.single_settings, { color: theme.text, flex: 1 }]}
@@ -155,7 +165,7 @@ const Settings = () => {
             value={isDarkMode}
             onValueChange={toggleTheme}
             trackColor={{ true: "#ff5330", false: "#ccc" }}
-            thumbColor="#fff"
+            thumbColor={isDarkMode ? "#fff" : "#ff5330"}
           />
         </View>
 
@@ -284,6 +294,83 @@ const Settings = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
+          onPress={() => router.push("/settings-components/app-tutorials")}
+        >
+          <View
+            style={[
+              styles.single_settings_ctn,
+              { borderBottomColor: isDarkMode ? theme.border : "#eee" },
+            ]}
+          >
+            <View style={iconBg("#795548")}>
+              <MaterialCommunityIcons
+                name="book-open-outline"
+                size={18}
+                color="#fff"
+              />
+            </View>
+            <Text
+              style={[styles.single_settings, { color: theme.text, flex: 1 }]}
+            >
+              App Tutorials
+            </Text>
+            <Entypo name="chevron-small-right" size={24} color="grey" />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() =>
+            router.push("/settings-components/sos-msg-customization")
+          }
+        >
+          <View
+            style={[
+              styles.single_settings_ctn,
+              { borderBottomColor: isDarkMode ? theme.border : "#eee" },
+            ]}
+          >
+            <View style={iconBg("#795548")}>
+              <MaterialCommunityIcons
+                name="message-alert-outline"
+                size={18}
+                color="#fff"
+              />
+            </View>
+            <Text
+              style={[styles.single_settings, { color: theme.text, flex: 1 }]}
+            >
+              SOS Message Customization
+            </Text>
+            <Entypo name="chevron-small-right" size={24} color="grey" />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push("/settings-components/addSettingsHere")}
+        >
+          <View
+            style={[
+              styles.single_settings_ctn,
+              { borderBottomColor: isDarkMode ? theme.border : "#eee" },
+            ]}
+          >
+            <View style={iconBg("#795548")}>
+              <MaterialCommunityIcons
+                name="file-document-outline"
+                size={18}
+                color="#fff"
+              />
+            </View>
+            <Text
+              style={[styles.single_settings, { color: theme.text, flex: 1 }]}
+            >
+              Add Settings here
+            </Text>
+            <Entypo name="chevron-small-right" size={24} color="grey" />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => router.push("/settings-components/license")}
         >
           <View
@@ -367,16 +454,10 @@ const Settings = () => {
 export default Settings;
 
 const styles = StyleSheet.create({
-  heading: {
-    paddingLeft: 20,
-    paddingVertical: 20,
-    fontSize: 18,
-    fontWeight: "500",
-  },
   container: {
     backgroundColor: "#fff",
     marginHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
     marginTop: 24,
     elevation: 3,
     shadowColor: "#000",
@@ -387,24 +468,24 @@ const styles = StyleSheet.create({
   single_settings_ctn: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
   },
   dark_mode_ctn: {
-    paddingVertical: 7,
+    paddingVertical: 11,
   },
   last_single_settings_ctn: {
     borderBottomWidth: 0,
   },
   single_settings: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "500",
     letterSpacing: 0.2,
   },
+
   switch: {
-    transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
-    padding: 0,
-    margin: 0,
+    transform: [{ scaleX: 1 }, { scaleY: 1 }],
+    marginHorizontal: 2,
   },
 });

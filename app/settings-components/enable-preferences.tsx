@@ -33,18 +33,13 @@ const EnablePreferencesScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode? theme.card : theme.background }]}>
-      <View style={[styles.header, { borderColor: isDarkMode? '#363636' : '#eee' }]}>
-        <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#ff5330" />
-        </Pressable>
-        <Text style={[styles.title, { color: isDarkMode? '#fff' : '#000' }]}>Enable Preferences</Text>
-      </View>
+    <View style={styles.container}>
+      
 
       <View style={styles.inner}>
         {Object.entries(preferences).map(([key, value]) => (
           <View style={styles.preferenceItem} key={key}>
-            <Text style={[styles.label, { color: isDarkMode? '#fff' : '#000' }]}>{getLabelText(key)}</Text>
+            <Text style={styles.label}>{getLabelText(key)}</Text>
             <Switch
               value={value}
               onValueChange={() => togglePreference(key as keyof typeof preferences)}
@@ -54,7 +49,7 @@ const EnablePreferencesScreen = () => {
           </View>
         ))}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -80,24 +75,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-  },
+
   inner: {
     flex: 1,
     padding: 20,

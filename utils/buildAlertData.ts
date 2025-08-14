@@ -23,12 +23,11 @@ export interface AlertData {
   userId: string;
   userName: string;
   serviceType: string;
-  time: any; // Firestore Timestamp
+  time: any;
   location: string;
   lat: number;
   lng: number;
   message: string;
-  audioUrl?: string;
   user: UserDetails;
   emergencyContacts: EmergencyContact[];
 }
@@ -38,7 +37,6 @@ export function buildAlertData(
   emergencyContacts: EmergencyContact[],
   location: { lat: number; lng: number; address: string },
   serviceType: string,
-  audioUrl: string,
   userId: string
 ): AlertData {
   const userName = `${user.firstName} ${
@@ -55,7 +53,6 @@ export function buildAlertData(
     lat: location.lat,
     lng: location.lng,
     message,
-    audioUrl,
     user,
     emergencyContacts,
   };

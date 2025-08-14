@@ -1,3 +1,4 @@
+
 import Entypo from "@expo/vector-icons/Entypo";
 
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
@@ -9,7 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import { getAuth } from "firebase/auth";
 import { getDatabase, onValue, ref } from "firebase/database";
 import { doc, getFirestore, setDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,10 +24,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Animated,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { saveUserDetails } from "../../utils/saveUserDetails";
 import { useTheme } from "..//..//themeContext";
 
 interface UserDetailsModalProps {
@@ -45,6 +46,9 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   // State to store user details (default to "None" for missing fields)
   const [userDetails, setUserDetails] = useState({
@@ -140,26 +144,25 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
     }
   }, []);
 
-  // Function to handle toggling between view and edit mode
   const handleEditToggle = async () => {
+    const auth = getAuth();
     if (isEditing) {
-      // Save changes
       try {
-        const profileUrl = await saveUserDetails(
-          tempDetails,
-          tempProfileImageSrc
-        );
-        setUserDetails({ ...tempDetails, profileImageUrl: profileUrl });
-        setProfileImageSrc(profileUrl || tempProfileImageSrc);
-        Alert.alert("Saved", "Your details have been updated.");
+        setUserDetails({
+          ...tempDetails,
+          profileImageUrl: tempProfileImageSrc,
+        });
+        setProfileImageSrc(tempProfileImageSrc);
 
-        // Update Firestore document
         const firestore = getFirestore();
         await setDoc(doc(firestore, "users", auth.currentUser.uid), {
           ...tempDetails,
-          profileImageUrl: profileUrl,
+          profileImageUrl: tempProfileImageSrc,
           email: userDetails.email,
         });
+
+        setSuccessMessage("Your details have been updated successfully");
+        setTimeout(() => setSuccessMessage(""), 4000);
       } catch (error) {
         console.error("Save user details error:", error);
         Alert.alert("Error", "Failed to save details. Please try again.");
@@ -239,525 +242,578 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ closeModal }) => {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: theme.background }]}
-    >
-      {/* Top Container with Close and Edit/Done Buttons */}
-      <View
-        style={[
-          styles.topContainer,
-          {
-            backgroundColor: theme.card,
-            borderBottomColor: isDarkMode ? "#222" : "#eee",
-          },
-        ]}
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: theme.background }]}
       >
-        <Pressable onPress={closeModal}>
-          <Entypo name="chevron-down" size={30} color="#ff5330" />
-        </Pressable>
-        <Pressable onPress={handleEditToggle}>
-          {isEditing ? (
-            // <Entypo name="check" size={24} color="#ff5330" />
-            <Text style={{ color: "#ff5330", fontWeight: "800", fontSize: 16 }}>
-              Done
-            </Text>
-          ) : (
-            // <Entypo name="edit" size={20} color="#ff5330" />
-            <Text style={{ color: "#ff5330", fontWeight: "800", fontSize: 16 }}>
-              Edit
-            </Text>
-          )}
-        </Pressable>
-      </View>
-
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
-      >
-        {/* Profile Details Container */}
-        <ScrollView
-          style={[styles.profileContainer, { backgroundColor: theme.card }]}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        {/* Top Container with Close and Edit/Done Buttons */}
+        <View
+          style={[
+            styles.topContainer,
+            {
+              backgroundColor: theme.card,
+              borderBottomColor: isDarkMode ? "#222" : "#eee",
+            },
+          ]}
         >
-          {/* Profile Image and Name/Occupation */}
-          <View style={styles.profileImageContainer}>
-            <Pressable
-              onPress={handleProfilePictureClick}
-              style={styles.profileImagePressable}
-            >
-              <Image
-                source={{
-                  uri: isEditing ? tempProfileImageSrc : profileImageSrc,
+          <Pressable
+            onPress={() => {
+              Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+              }).start(() => closeModal());
+            }}
+          >
+            <Entypo name="chevron-down" size={30} color="#ff5330" />
+          </Pressable>
+          <Pressable onPress={handleEditToggle}>
+            {isEditing ? (
+              // <Entypo name="check" size={24} color="#ff5330" />
+              <Text
+                style={{
+                  color: "#fff",
+                  fontWeight: "800",
+                  fontSize: 16,
+                  backgroundColor: "#39a241",
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
+                  borderRadius: 6,
                 }}
-                style={styles.profileImage}
-              />
-              {isEditing && (
-                <View style={styles.changeOverlay}>
-                  {isPickingImage ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={styles.changeText}>Change</Text>
-                  )}
-                </View>
-              )}
-            </Pressable>
-            <View style={styles.name_occupation_ctn}>
-              <Text
-                style={[
-                  styles.nameText,
-                  { color: isDarkMode ? "#fff" : "#000" },
-                ]}
               >
-                {userDetails.firstName} {userDetails.lastName}
+                Done
               </Text>
+            ) : (
+              // <Entypo name="edit" size={20} color="#ff5330" />
               <Text
-                style={[
-                  styles.occupationText,
-                  { color: isDarkMode ? "#bbb" : "grey" },
-                ]}
+                style={{
+                  color: "#fff",
+                  fontWeight: "800",
+                  fontSize: 16,
+                  backgroundColor: "#ff2a00ff",
+                  paddingVertical: 5,
+                  paddingHorizontal: 8,
+                  borderRadius: 6,
+                }}
               >
-                {userDetails.occupation}
+                Edit
               </Text>
-            </View>
-          </View>
+            )}
+          </Pressable>
+        </View>
 
-          <View style={[styles.detailsCard, { backgroundColor: theme.card }]}>
-            {/* Phone Number */}
-            <View style={styles.detailRow}>
-              {iconMap.phone}
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Phone No
-                </Text>
-                {isEditing ? (
-                  <TextInput
-                    style={[
-                      styles.detailsInput,
-                      {
-                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                        color: isDarkMode ? "#fff" : "#333",
-                        borderColor: isDarkMode ? "#333" : "#ddd",
-                      },
-                    ]}
-                    placeholder="Phone Number"
-                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                    value={tempDetails.phone}
-                    onChangeText={(text) => handleFieldChange("phone", text)}
-                    keyboardType="phone-pad"
-                    returnKeyType="done"
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
-                    ]}
-                  >
-                    {userDetails.phone}
-                  </Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
+        >
+          {/* Profile Details Container */}
+          <ScrollView
+            style={[styles.profileContainer, { backgroundColor: theme.card }]}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Profile Image and Name/Occupation */}
+            <View style={styles.profileImageContainer}>
+              <Pressable
+                onPress={handleProfilePictureClick}
+                style={styles.profileImagePressable}
+              >
+                <Image
+                  source={{
+                    uri: isEditing ? tempProfileImageSrc : profileImageSrc,
+                  }}
+                  style={styles.profileImage}
+                />
+                {isEditing && (
+                  <View style={styles.changeOverlay}>
+                    {isPickingImage ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.changeText}>Change</Text>
+                    )}
+                  </View>
                 )}
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Email */}
-            <View style={styles.detailRow}>
-              {iconMap.email}
-              <View style={styles.detailTextCtn}>
+              </Pressable>
+              <View style={styles.name_occupation_ctn}>
                 <Text
                   style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Email
-                </Text>
-                <Text
-                  style={[
-                    styles.detailsAns,
+                    styles.nameText,
                     { color: isDarkMode ? "#fff" : "#000" },
                   ]}
                 >
-                  {userDetails.email}
+                  {userDetails.firstName} {userDetails.lastName}
                 </Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Home Address */}
-            <View style={styles.detailRow}>
-              {iconMap.address}
-              <View style={styles.detailTextCtn}>
                 <Text
                   style={[
-                    styles.detailsQue,
+                    styles.occupationText,
                     { color: isDarkMode ? "#bbb" : "grey" },
                   ]}
                 >
-                  Home Address
+                  {userDetails.occupation}
                 </Text>
-                {isEditing ? (
-                  <TextInput
-                    style={[
-                      styles.detailsInput,
-                      {
-                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                        color: isDarkMode ? "#fff" : "#333",
-                        borderColor: isDarkMode ? "#333" : "#ddd",
-                      },
-                    ]}
-                    placeholder="Home Address"
-                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                    value={tempDetails.address}
-                    onChangeText={(text) => handleFieldChange("address", text)}
-                    returnKeyType="done"
-                  />
-                ) : (
+              </View>
+            </View>
+
+            <View style={[styles.detailsCard, { backgroundColor: theme.card }]}>
+              {/* Phone Number */}
+              <View style={styles.detailRow}>
+                {iconMap.phone}
+                <View style={styles.detailTextCtn}>
                   <Text
                     style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
                     ]}
                   >
-                    {userDetails.address}
+                    Phone No
                   </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Occupation */}
-            <View style={styles.detailRow}>
-              <MaterialIcons name="work" size={20} color="#ff5330" />
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Occupation
-                </Text>
-                {isEditing ? (
-                  <TextInput
-                    style={[
-                      styles.detailsInput,
-                      {
-                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                        color: isDarkMode ? "#fff" : "#333",
-                        borderColor: isDarkMode ? "#333" : "#ddd",
-                      },
-                    ]}
-                    placeholder="Occupation"
-                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                    value={tempDetails.occupation}
-                    onChangeText={(text) =>
-                      handleFieldChange("occupation", text)
-                    }
-                    returnKeyType="done"
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
-                    ]}
-                  >
-                    {userDetails.occupation}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Gender */}
-            <View style={styles.detailRow}>
-              {iconMap.gender}
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Gender
-                </Text>
-                {isEditing ? (
-                  <DropDownPicker
-                    open={genderOpen}
-                    setOpen={setGenderOpen}
-                    value={
-                      tempDetails.gender === "None" ? null : tempDetails.gender
-                    }
-                    setValue={(callback) => {
-                      const value = callback(
-                        tempDetails.gender === "None"
-                          ? null
-                          : tempDetails.gender
-                      );
-                      handleFieldChange("gender", value || "None");
-                    }}
-                    items={genderItems}
-                    placeholder="Select Gender"
-                    style={{
-                      backgroundColor: isDarkMode ? "#222" : "#f9f9f9",
-                      borderColor: isDarkMode ? "#333" : "#ddd",
-                      minHeight: 44,
-                    }}
-                    textStyle={{
-                      color: isDarkMode ? "#fff" : "#222",
-                    }}
-                    dropDownContainerStyle={{
-                      backgroundColor: isDarkMode ? "#222" : "#fff",
-                      borderColor: isDarkMode ? "#333" : "#ddd",
-                    }}
-                    zIndex={3000}
-                    zIndexInverse={1000}
-                    listMode="SCROLLVIEW"
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
-                    ]}
-                  >
-                    {userDetails.gender}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Date of Birth */}
-            <View style={styles.detailRow}>
-              {iconMap.dob}
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Date of Birth
-                </Text>
-                {isEditing ? (
-                  <>
-                    <TouchableOpacity
-                      onPress={() => setShowDatePicker(true)}
+                  {isEditing ? (
+                    <TextInput
                       style={[
                         styles.detailsInput,
                         {
-                          backgroundColor: isDarkMode ? "#222" : "#f9f9f9", // off-white for light mode
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
                           borderColor: isDarkMode ? "#333" : "#ddd",
-                          justifyContent: "center",
                         },
                       ]}
+                      placeholder="Phone Number"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.phone}
+                      onChangeText={(text) => handleFieldChange("phone", text)}
+                      keyboardType="phone-pad"
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
                     >
-                      <Text style={{ color: isDarkMode ? "#fff" : "#222" }}>
-                        {tempDetails.dob === "None"
-                          ? "Select Date"
-                          : tempDetails.dob}
-                      </Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                      <DateTimePicker
-                        value={
-                          tempDetails.dob !== "None"
-                            ? new Date(tempDetails.dob)
-                            : new Date(2000, 0, 1)
-                        }
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={(_, selectedDate) => {
-                          setShowDatePicker(false);
-                          if (selectedDate) {
-                            // Format as YYYY-MM-DD
-                            const formatted = selectedDate
-                              .toISOString()
-                              .split("T")[0];
-                            handleFieldChange("dob", formatted);
-                          }
-                        }}
-                        themeVariant={isDarkMode ? "dark" : "light"}
-                      />
-                    )}
-                  </>
-                ) : (
+                      {userDetails.phone}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Email */}
+              <View style={styles.detailRow}>
+                {iconMap.email}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Email
+                  </Text>
                   <Text
                     style={[
                       styles.detailsAns,
                       { color: isDarkMode ? "#fff" : "#000" },
                     ]}
                   >
-                    {userDetails.dob}
+                    {userDetails.email}
                   </Text>
-                )}
+                </View>
               </View>
-            </View>
-            <View style={styles.divider} />
+              <View style={styles.divider} />
 
-            {/* Blood Type */}
-            <View style={styles.detailRow}>
-              {iconMap.bloodType}
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Blood Type
-                </Text>
-                {isEditing ? (
-                  <DropDownPicker
-                    open={bloodOpen}
-                    setOpen={setBloodOpen}
-                    value={
-                      tempDetails.bloodType === "None"
-                        ? null
-                        : tempDetails.bloodType
-                    }
-                    setValue={(callback) => {
-                      const value = callback(
+              {/* Home Address */}
+              <View style={styles.detailRow}>
+                {iconMap.address}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Home Address
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Home Address"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.address}
+                      onChangeText={(text) =>
+                        handleFieldChange("address", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.address}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Occupation */}
+              <View style={styles.detailRow}>
+                <MaterialIcons name="work" size={20} color="#ff5330" />
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Occupation
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Occupation"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.occupation}
+                      onChangeText={(text) =>
+                        handleFieldChange("occupation", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.occupation}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Gender */}
+              <View style={styles.detailRow}>
+                {iconMap.gender}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Gender
+                  </Text>
+                  {isEditing ? (
+                    <DropDownPicker
+                      open={genderOpen}
+                      setOpen={setGenderOpen}
+                      value={
+                        tempDetails.gender === "None"
+                          ? null
+                          : tempDetails.gender
+                      }
+                      setValue={(callback) => {
+                        const value = callback(
+                          tempDetails.gender === "None"
+                            ? null
+                            : tempDetails.gender
+                        );
+                        handleFieldChange("gender", value || "None");
+                      }}
+                      items={genderItems}
+                      placeholder="Select Gender"
+                      style={{
+                        backgroundColor: isDarkMode ? "#222" : "#f9f9f9",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                        minHeight: 44,
+                      }}
+                      textStyle={{
+                        color: isDarkMode ? "#fff" : "#222",
+                      }}
+                      dropDownContainerStyle={{
+                        backgroundColor: isDarkMode ? "#222" : "#fff",
+                        borderColor: isDarkMode ? "#333" : "#ddd",
+                      }}
+                      zIndex={3000}
+                      zIndexInverse={1000}
+                      listMode="SCROLLVIEW"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.gender}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Date of Birth */}
+              <View style={styles.detailRow}>
+                {iconMap.dob}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Date of Birth
+                  </Text>
+                  {isEditing ? (
+                    <>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(true)}
+                        style={[
+                          styles.detailsInput,
+                          {
+                            backgroundColor: isDarkMode ? "#222" : "#f9f9f9", // off-white for light mode
+                            borderColor: isDarkMode ? "#333" : "#ddd",
+                            justifyContent: "center",
+                          },
+                        ]}
+                      >
+                        <Text style={{ color: isDarkMode ? "#fff" : "#222" }}>
+                          {tempDetails.dob === "None"
+                            ? "Select Date"
+                            : tempDetails.dob}
+                        </Text>
+                      </TouchableOpacity>
+                      {showDatePicker && (
+                        <DateTimePicker
+                          value={
+                            tempDetails.dob !== "None"
+                              ? new Date(tempDetails.dob)
+                              : new Date(2000, 0, 1)
+                          }
+                          mode="date"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(_, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) {
+                              // Format as YYYY-MM-DD
+                              const formatted = selectedDate
+                                .toISOString()
+                                .split("T")[0];
+                              handleFieldChange("dob", formatted);
+                            }
+                          }}
+                          themeVariant={isDarkMode ? "dark" : "light"}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.dob}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Blood Type */}
+              <View style={styles.detailRow}>
+                {iconMap.bloodType}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Blood Type
+                  </Text>
+                  {isEditing ? (
+                    <DropDownPicker
+                      open={bloodOpen}
+                      setOpen={setBloodOpen}
+                      value={
                         tempDetails.bloodType === "None"
                           ? null
                           : tempDetails.bloodType
-                      );
-                      handleFieldChange("bloodType", value || "None");
-                    }}
-                    items={bloodItems}
-                    placeholder="Select Blood Type"
-                    style={{
-                      backgroundColor: isDarkMode ? "#222" : "#f9f9f9",
-                      borderColor: isDarkMode ? "#333" : "#ddd",
-                      minHeight: 44,
-                    }}
-                    textStyle={{
-                      color: isDarkMode ? "#fff" : "#222",
-                    }}
-                    dropDownContainerStyle={{
-                      backgroundColor: isDarkMode ? "#222" : "#fff",
-                      borderColor: isDarkMode ? "#333" : "#ddd",
-                    }}
-                    zIndex={2000}
-                    zIndexInverse={2000}
-                    listMode="SCROLLVIEW"
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
-                    ]}
-                  >
-                    {userDetails.bloodType}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Medical Condition */}
-            <View style={styles.detailRow}>
-              {iconMap.medicalCondition}
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Medical Condition
-                </Text>
-                {isEditing ? (
-                  <TextInput
-                    style={[
-                      styles.detailsInput,
-                      {
-                        backgroundColor: isDarkMode ? "#222" : "#fefefe",
-                        color: isDarkMode ? "#fff" : "#333",
+                      }
+                      setValue={(callback) => {
+                        const value = callback(
+                          tempDetails.bloodType === "None"
+                            ? null
+                            : tempDetails.bloodType
+                        );
+                        handleFieldChange("bloodType", value || "None");
+                      }}
+                      items={bloodItems}
+                      placeholder="Select Blood Type"
+                      style={{
+                        backgroundColor: isDarkMode ? "#222" : "#f9f9f9",
                         borderColor: isDarkMode ? "#333" : "#ddd",
-                      },
-                    ]}
-                    placeholder="Medical Condition"
-                    placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
-                    value={tempDetails.medicalCondition}
-                    onChangeText={(text) =>
-                      handleFieldChange("medicalCondition", text)
-                    }
-                    returnKeyType="done"
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
-                    ]}
-                  >
-                    {userDetails.medicalCondition}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            {/* Allergies */}
-            <View style={styles.detailRow}>
-              {iconMap.allergies}
-              <View style={styles.detailTextCtn}>
-                <Text
-                  style={[
-                    styles.detailsQue,
-                    { color: isDarkMode ? "#bbb" : "grey" },
-                  ]}
-                >
-                  Allergies
-                </Text>
-                {isEditing ? (
-                  <TextInput
-                    style={[
-                      styles.detailsInput,
-                      {
-                        backgroundColor: isDarkMode ? "#222" : "#f9f9f9", // <-- Slightly off-white for light mode
+                        minHeight: 44,
+                      }}
+                      textStyle={{
                         color: isDarkMode ? "#fff" : "#222",
+                      }}
+                      dropDownContainerStyle={{
+                        backgroundColor: isDarkMode ? "#222" : "#fff",
                         borderColor: isDarkMode ? "#333" : "#ddd",
-                      },
-                    ]}
-                    placeholder="Allergies"
-                    placeholderTextColor={isDarkMode ? "#888" : "#888"}
-                    value={tempDetails.allergies}
-                    onChangeText={(text) =>
-                      handleFieldChange("allergies", text)
-                    }
-                    returnKeyType="done"
-                  />
-                ) : (
+                      }}
+                      zIndex={2000}
+                      zIndexInverse={2000}
+                      listMode="SCROLLVIEW"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.bloodType}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Medical Condition */}
+              <View style={styles.detailRow}>
+                {iconMap.medicalCondition}
+                <View style={styles.detailTextCtn}>
                   <Text
                     style={[
-                      styles.detailsAns,
-                      { color: isDarkMode ? "#fff" : "#000" },
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
                     ]}
                   >
-                    {userDetails.allergies}
+                    Medical Condition
                   </Text>
-                )}
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#fefefe",
+                          color: isDarkMode ? "#fff" : "#333",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Medical Condition"
+                      placeholderTextColor={isDarkMode ? "#888" : "#aaa"}
+                      value={tempDetails.medicalCondition}
+                      onChangeText={(text) =>
+                        handleFieldChange("medicalCondition", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.medicalCondition}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.divider} />
+
+              {/* Allergies */}
+              <View style={styles.detailRow}>
+                {iconMap.allergies}
+                <View style={styles.detailTextCtn}>
+                  <Text
+                    style={[
+                      styles.detailsQue,
+                      { color: isDarkMode ? "#bbb" : "grey" },
+                    ]}
+                  >
+                    Allergies
+                  </Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={[
+                        styles.detailsInput,
+                        {
+                          backgroundColor: isDarkMode ? "#222" : "#f9f9f9", // <-- Slightly off-white for light mode
+                          color: isDarkMode ? "#fff" : "#222",
+                          borderColor: isDarkMode ? "#333" : "#ddd",
+                        },
+                      ]}
+                      placeholder="Allergies"
+                      placeholderTextColor={isDarkMode ? "#888" : "#888"}
+                      value={tempDetails.allergies}
+                      onChangeText={(text) =>
+                        handleFieldChange("allergies", text)
+                      }
+                      returnKeyType="done"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.detailsAns,
+                        { color: isDarkMode ? "#fff" : "#000" },
+                      ]}
+                    >
+                      {userDetails.allergies}
+                    </Text>
+                  )}
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
 
-      <StatusBar style={isDarkMode ? "dark" : "light"} />
-    </SafeAreaView>
+        <StatusBar style={isDarkMode ? "dark" : "light"} />
+        {successMessage ? (
+          <View
+            style={{
+              position: "absolute",
+              bottom: 30,
+              left: 20,
+              right: 20,
+              backgroundColor: "#39a241",
+              padding: 10,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: "#fff", textAlign: "center" }}>
+              {successMessage}
+            </Text>
+          </View>
+        ) : null}
+      </SafeAreaView>
+    </Animated.View>
   );
 };
 
@@ -799,6 +855,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     overflow: "hidden",
+    backgroundColor: "#ccc",
   },
   profileImage: {
     width: "100%",

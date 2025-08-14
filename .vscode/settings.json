@@ -28,13 +28,17 @@
     "appspot",
     "APSS",
     "chatbubble",
+    "comgooglemaps",
     "datetimepicker",
     "firebaseapp",
     "Firestore",
     "flashscreen",
     "Fontisto",
+    "geolocation",
     "Licences",
     "Prefs",
-    "safetyalertapp"
+    "safetyalertapp",
+    "SCROLLVIEW",
+    "Swipeable"
   ]
 }

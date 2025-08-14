@@ -103,7 +103,7 @@ const SignInScreen = () => {
         console.log("User signed in successfully!");
         router.replace("/(tabs)");
       } catch (error: any) {
-        console.error("Sign In Error:", error.code, error.message);
+        // console.error("Sign In Error:", error.code, error.message);
         switch (error.code) {
           case "auth/invalid-email":
             setAuthError("That email address is invalid!");
@@ -215,7 +215,10 @@ const SignInScreen = () => {
                 <Text style={styles.errorText}>{authError}</Text>
               ) : null}
 
-              <TouchableOpacity>
+              <TouchableOpacity
+                style={styles.forgotPasswordCtn}
+                onPress={() => router.push("/forgot-password")}
+              >
                 <Text style={styles.forgotPasswordText}>Forgot Password</Text>
               </TouchableOpacity>
 
@@ -231,14 +234,14 @@ const SignInScreen = () => {
                 )}
               </TouchableOpacity>
 
-              {/* {biometricSupported && (
+              {biometricSupported && (
                 <TouchableOpacity
                   onPress={handleBiometricAuth}
                   style={styles.biometricBtn}
                 >
                   <Text style={styles.btnText}>🔒 Biometric Login</Text>
                 </TouchableOpacity>
-              )} */}
+              )}
 
               <View style={styles.signInContainer}>
                 <Text>Don`t have an account?</Text>
@@ -296,13 +299,15 @@ const styles = StyleSheet.create({
   text: {
     color: "#000",
   },
+
   input: {
     borderBottomWidth: 1,
     marginBottom: 28,
     fontSize: 20,
     borderColor: "#949494",
-    paddingVertical: 4,
+    paddingVertical: Platform.OS === "ios" ? 6 : 4,
   },
+
   inputError: {
     borderColor: "red",
   },
@@ -312,6 +317,11 @@ const styles = StyleSheet.create({
     marginTop: -20,
     marginBottom: 10,
   },
+
+  forgotPasswordCtn: {
+    alignSelf: "flex-end",
+  },
+
   forgotPasswordText: {
     marginTop: -10,
     textAlign: "right",

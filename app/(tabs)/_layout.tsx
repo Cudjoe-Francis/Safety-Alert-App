@@ -30,8 +30,8 @@ const TabsLayout = () => {
               borderTopColor:
                 Platform.OS === "ios"
                   ? isDarkMode
-                    ? "#121212"
-                    : "#ddd"
+                    ? "#3d3d3dff"
+                    : "#eee"
                   : undefined,
               elevation: Platform.OS === "android" ? 8 : 0,
             },

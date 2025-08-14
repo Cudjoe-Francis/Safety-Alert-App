@@ -7,10 +7,7 @@ import {
   Pressable,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useTheme } from "..//../themeContext";
 
 const triggerMethods = [
   "Shake Phone",
@@ -20,9 +17,7 @@ const triggerMethods = [
 ];
 
 const AlertTriggerMethodScreen = () => {
-  const { isDarkMode, theme } = useTheme();
 
-  const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
   const handleSelect = (method: string) => {
@@ -38,27 +33,14 @@ const AlertTriggerMethodScreen = () => {
   };
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: isDarkMode ? theme.card : theme.background },
-      ]}
+    <View
+      style={
+        styles.container
+      }
     >
-      <View
-        style={[
-          styles.header,
-          { borderColor: isDarkMode ? "#363636" : "#eee" },
-        ]}
-      >
-        <Pressable onPress={router.back} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#ff5330" />
-        </Pressable>
-        <Text style={[styles.title, { color: isDarkMode ? "#fff" : "#000" }]}>
-          Alert Trigger Method
-        </Text>
-      </View>
+      
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         {triggerMethods.map((method) => (
           <Pressable
             key={method}
@@ -76,10 +58,9 @@ const AlertTriggerMethodScreen = () => {
               style={{ marginRight: 10 }}
             />
             <Text
-              style={[
-                styles.methodText,
-                { color: isDarkMode ? "#fff" : "#000" },
-              ]}
+              style={
+                styles.methodText
+              }
             >
               {method}
             </Text>
@@ -89,8 +70,8 @@ const AlertTriggerMethodScreen = () => {
         <Pressable style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>Save Method</Text>
         </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 };
 
@@ -101,24 +82,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#000",
-  },
+
+ 
   content: {
     padding: 20,
   },

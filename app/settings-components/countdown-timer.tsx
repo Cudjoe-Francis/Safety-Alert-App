@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 const timerOptions = [
+  "0 second",
   "5 seconds",
   "10 seconds",
   "15 seconds",

@@ -30,7 +30,8 @@ import { useTheme } from "..//../themeContext";
 import UserDetailsModal from "../components/user-details";
 import { useNotification } from "../context/NotificationContext";
 
-type ServiceId = "hospital" | "police" | "fire" | "campus";
+type ServiceId = "Hospital" | "Police" | "Fire" | "Campus";
+// type ServiceId = "hospital" | "police" | "fire" | "campus";
 
 interface Service {
   name: string;
@@ -326,24 +327,24 @@ const Home: React.FC = () => {
   const services: Service[] = [
     {
       name: "Hospital",
-      id: "hospital",
+      id: "Hospital",
       icon: <FontAwesome5 name="hospital-alt" size={40} color="#008000" />,
     },
     {
       name: "Police",
-      id: "police",
+      id: "Police",
       icon: <MaterialIcons name="security" size={40} color="#121a68" />,
     },
     {
       name: "Fire Service",
-      id: "fire",
+      id: "Fire",
       icon: (
         <MaterialIcons name="local-fire-department" size={40} color="red" />
       ),
     },
     {
       name: "Campus Watch",
-      id: "campus",
+      id: "Campus",
       icon: <MaterialIcons name="security" size={40} color="#5d3fd3" />,
     },
   ];

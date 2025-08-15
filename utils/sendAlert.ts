@@ -1,13 +1,9 @@
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { firestore } from "../firebaseFirestore";
 import { AlertData } from "./buildAlertData";
 
-
 // Sends alert data to Firestore
 export async function sendAlertToFirestore(alert: AlertData) {
-  const alertsRef = collection(firestore, "alerts");
-  await addDoc(alertsRef, {
-    ...alert,
-    time: Timestamp.fromDate(alert.time), // Firestore Timestamp
-  });
+  // alert.serviceType should be set to "police", "fire", etc.
+  await addDoc(collection(firestore, "alerts"), alert);
 }

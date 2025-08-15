@@ -1,95 +1,101 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  Switch,
-  Pressable,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useTheme } from "..//../themeContext";
+import { MaterialIcons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
+const preferences = [
+  { key: "location", label: "Enable Location Services" },
+  { key: "notifications", label: "Enable Notifications" },
+  { key: "darkMode", label: "Enable Dark Mode" },
+  { key: "autoSOS", label: "Enable Auto SOS" },
+];
 
 const EnablePreferencesScreen = () => {
-
-        const { isDarkMode, theme } = useTheme();
-  
-  const router = useRouter();
-
-  const [preferences, setPreferences] = useState({
+  const [enabled, setEnabled] = useState({
+    location: true,
     notifications: true,
-    vibration: true,
-    autoSendLocation: false,
-    voiceAlert: false,
+    darkMode: false,
+    autoSOS: false,
   });
 
-  const togglePreference = (key: keyof typeof preferences) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  const toggleSwitch = (key: string) => {
+    setEnabled((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
     <View style={styles.container}>
-      
-
-      <View style={styles.inner}>
-        {Object.entries(preferences).map(([key, value]) => (
-          <View style={styles.preferenceItem} key={key}>
-            <Text style={styles.label}>{getLabelText(key)}</Text>
-            <Switch
-              value={value}
-              onValueChange={() => togglePreference(key as keyof typeof preferences)}
-              trackColor={{ false: '#ccc', true: '#ff5330' }}
-              thumbColor="#fff"
-            />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+          <View style={styles.headerRow}>
+            <MaterialIcons name="settings" size={28} color="#ff5330" />
+            <Text style={styles.title}>Preferences</Text>
           </View>
-        ))}
-      </View>
+          {preferences.map((pref) => (
+            <View key={pref.key} style={styles.prefRow}>
+              <Text style={styles.prefLabel}>{pref.label}</Text>
+              <Switch
+                value={enabled[pref.key]}
+                onValueChange={() => toggleSwitch(pref.key)}
+                trackColor={{ false: "#eee", true: "#ff5330" }}
+                thumbColor={enabled[pref.key] ? "#fff" : "#ccc"}
+              />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
 export default EnablePreferencesScreen;
 
-const getLabelText = (key: string) => {
-  switch (key) {
-    case 'notifications':
-      return 'Enable Notifications';
-    case 'vibration':
-      return 'Enable Vibration on Alert';
-    case 'autoSendLocation':
-      return 'Auto-Send Location';
-    case 'voiceAlert':
-      return 'Enable Voice Alert';
-    default:
-      return key;
-  }
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#f6f7fb",
+    justifyContent: "center",
+    // alignItems: "center",
   },
-
-  inner: {
-    flex: 1,
-    padding: 20,
+  content: {
+    padding: 24,
+    alignItems: "center",
   },
-  preferenceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    // borderBottomWidth: 1,
-    // borderColor: '#eee',
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 28,
+    width: "100%",
+    maxWidth: 400,
+    elevation: 6,
+    shadowColor: "#ff5330",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
   },
-  label: {
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#222",
+    marginLeft: 10,
+  },
+  prefRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  prefLabel: {
     fontSize: 16,
-    color: '#333',
+    color: "#555",
+    fontWeight: "500",
   },
 });

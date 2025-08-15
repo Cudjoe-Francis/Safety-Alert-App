@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
+import { getDatabase, onValue, ref } from "firebase/database";
 import {
   collection,
   deleteDoc,
@@ -12,6 +13,7 @@ import {
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Modal,
   StyleSheet,
@@ -34,6 +36,7 @@ const serviceColors: Record<string, string> = {
   fire: "red",
   campus: "#5d3fd3",
   incident: "#ff5330",
+  sos: "#ff5330", // Add SOS color
 };
 
 const serviceIcons: Record<string, any> = {
@@ -42,6 +45,7 @@ const serviceIcons: Record<string, any> = {
   fire: "flame",
   campus: "school",
   incident: "alert-circle",
+  sos: "sos", // Add SOS icon
 };
 
 const History = () => {
@@ -53,33 +57,22 @@ const History = () => {
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchHistory() {
-      setLoading(true);
-      const userAlerts = await getUserHistory(); // Alerts
-      const auth = getAuth();
-      const userId = auth.currentUser?.uid;
-      let incidentReports: any[] = [];
-      if (userId) {
-        const incidentQuery = query(
-          collection(firestore, "incidentReports"),
-          where("userId", "==", userId)
-        );
-        const incidentSnapshot = await getDocs(incidentQuery);
-        incidentReports = incidentSnapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-          type: "incident",
-        }));
-      }
-      // Combine and sort by time (latest first)
-      const allHistory = [
-        ...userAlerts.map((h) => ({ ...h, type: h.serviceType })),
-        ...incidentReports,
-      ].sort((a, b) => b.time?.seconds - a.time?.seconds);
-      setHistory(allHistory);
+    const userId = getAuth().currentUser?.uid;
+    if (!userId) return;
+    const db = getDatabase();
+    const historyRef = ref(db, `users/${userId}/history`);
+    const unsubscribe = onValue(historyRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      // Convert object to array with keys
+      const arr = Object.entries(data).map(([key, value]) => ({
+        id: key,
+        ...value,
+      }));
+      setHistory(arr.reverse());
       setLoading(false);
-    }
-    fetchHistory();
+      console.log("Fetched history:", arr); // Debug log
+    });
+    return () => unsubscribe();
   }, []);
 
   useFocusEffect(
@@ -173,43 +166,55 @@ const History = () => {
   );
 
   const renderItem = ({ item }: { item: any }) => (
-    <View
-      style={[
-        styles.card,
-        {
-          borderLeftColor: serviceColors[item.type] || "#888",
-          borderLeftWidth: 6,
-        },
-      ]}
-    >
-      <Ionicons
-        name={serviceIcons[item.type] || "document"}
-        size={28}
-        color={serviceColors[item.type] || "#888"}
-        style={{ marginRight: 12 }}
-      />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>
-          {item.type === "incident"
-            ? "Incident Report"
-            : item.serviceType?.charAt(0).toUpperCase() +
-              item.serviceType?.slice(1)}
-        </Text>
-        <Text style={styles.message} numberOfLines={2}>
-          {item.message}
-        </Text>
-        <Text style={styles.time}>
-          {item.time ? new Date(item.time.seconds * 1000).toLocaleString() : ""}
-        </Text>
-        {item.reply && (
-          <Text style={styles.reply}>
-            Reply: {item.reply.message || "Received"}
+    <Swipeable renderRightActions={() => renderRightActions(item)}>
+      <View
+        style={[
+          styles.card,
+          {
+            borderLeftColor: serviceColors[item.type] || "#888",
+            borderLeftWidth: 6,
+          },
+        ]}
+      >
+        <Ionicons
+          name={serviceIcons[item.type] || "document"}
+          size={28}
+          color={serviceColors[item.type] || "#888"}
+          style={{ marginRight: 12 }}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>
+            {item.type === "incident"
+              ? "Incident Report"
+              : item.serviceType?.charAt(0).toUpperCase() +
+                item.serviceType?.slice(1)}
           </Text>
-        )}
+          <Text style={styles.message} numberOfLines={2}>
+            {item.message}
+          </Text>
+          <Text style={styles.time}>
+            {item.time
+              ? new Date(item.time.seconds * 1000).toLocaleString()
+              : ""}
+          </Text>
+          {item.reply && (
+            <Text style={styles.reply}>
+              Reply: {item.reply.message || "Received"}
+            </Text>
+          )}
+        </View>
       </View>
-      {/* Optionally, add a button to view full details */}
-    </View>
+    </Swipeable>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#ff5330" />
+        <Text>Loading history...</Text>
+      </View>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -219,8 +224,10 @@ const History = () => {
           { backgroundColor: isDarkMode ? theme.card : theme.background },
         ]}
       >
-        {loading ? (
-          <Text style={{ textAlign: "center", marginTop: 40 }}>Loading...</Text>
+        {history.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No history found.</Text>
+          </View>
         ) : (
           <>
             {/* Delete Confirmation Modal */}
@@ -265,13 +272,8 @@ const History = () => {
             <FlatList
               data={history}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Swipeable renderRightActions={() => renderRightActions(item)}>
-                  {renderItem({ item })}
-                </Swipeable>
-              )}
-              contentContainerStyle={{ paddingBottom: 40 }}
-              onScroll={handleScroll}
+              renderItem={renderItem}
+              ListEmptyComponent={<Text>No history found.</Text>}
             />
           </>
         )}

@@ -1,19 +1,31 @@
 import React from "react";
-import { StyleSheet, Text, View, ScrollView } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const TermsAndConditionsScreen = () => {
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.text}>
-          By using the Safety Alert App, you agree to the following terms:
-          {"\n\n"}
-          1. You will use the app for emergency purposes only.{"\n\n"}
-          2. You consent to the use of location data during alerts.{"\n\n"}
-          3. We are not liable for any misuse of the app or failure of
-          third-party services.{"\n\n"}
-          4. These terms may change without notice.
-        </Text>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+         
+          <Text style={styles.text}>
+            By using this app, you agree to the following terms and conditions:
+            {"\n\n"}
+            1. You are responsible for the accuracy of the information you
+            provide.{"\n\n"}
+            2. The app is provided &ldquo;as is&ldquo; without warranty of any kind.
+            {"\n\n"}
+            3. We are not liable for any damages or losses resulting from the
+            use of this app.{"\n\n"}
+            4. Your data is stored securely and will not be shared with third
+            parties except as required by law.{"\n\n"}
+            5. You agree to use the app in accordance with all applicable laws
+            and regulations.{"\n\n"}
+            For full details, please contact support or visit our website.
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -24,15 +36,32 @@ export default TermsAndConditionsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f6f7fb",
+    justifyContent: "center",
   },
-  
   content: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    alignItems: "center",
   },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
+    width: "100%",
+    maxWidth: 400,
+    elevation: 6,
+    shadowColor: "#ff5330",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+  },
+
   text: {
     fontSize: 16,
     color: "#333",
-    lineHeight: 24,
+    lineHeight: 26,
+    marginTop: 8,
   },
 });

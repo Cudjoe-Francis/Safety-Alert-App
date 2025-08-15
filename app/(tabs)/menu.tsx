@@ -42,9 +42,8 @@ const Menu = () => {
     useCallback(() => {
       navigation.setOptions({
         headerStyle: {
-          backgroundColor: isDarkMode ? "#000" : "#fff",
-          // borderBottomWidth: 0,
-          // borderWidth: 5,
+          backgroundColor: isDarkMode ? "#000" : "#f6f7fb",
+          // borderBottomWidth: 3,
           // borderBottomColor: isDarkMode ? "#121212" : "#ddd",
         },
       });
@@ -60,14 +59,14 @@ const Menu = () => {
     >
       <ScrollView
         contentContainerStyle={{ paddingVertical: 20 }}
-        style={{ backgroundColor: theme.background }}
+        style={{ backgroundColor: "#f6f7fb" }}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         <View style={styles.menuContainer}>
           {/* Emergency Contacts */}
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card }]}
+            style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/emergency-contacts")}
           >
             <AntDesign name="contacts" size={24} color="#ff5330" />
@@ -78,7 +77,7 @@ const Menu = () => {
 
           {/* History */}
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card }]}
+           style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/history")}
           >
             <MaterialIcons name="history" size={24} color="#ff5330" />
@@ -89,7 +88,7 @@ const Menu = () => {
 
           {/* Incident Reports */}
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card }]}
+           style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/incident-reports")}
           >
             <FontAwesome5 name="file-alt" size={22} color="#ff5330" />
@@ -100,7 +99,7 @@ const Menu = () => {
 
           {/* Notifications */}
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card }]}
+           style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/notifications")}
           >
             <Ionicons name="notifications-outline" size={24} color="#ff5330" />
@@ -111,7 +110,7 @@ const Menu = () => {
 
           {/* Location tracker */}
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card }]}
+           style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/location-tracker")}
           >
             <Ionicons name="notifications-outline" size={24} color="#ff5330" />
@@ -122,7 +121,7 @@ const Menu = () => {
 
           {/* Safety Tips */}
           <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card }]}
+           style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/safety-tips")}
           >
             <AntDesign name="Safety" size={24} color="#ff5330" />
@@ -157,9 +156,25 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 14,
     borderRadius: 10,
-    shadowColor: "#000",
-    elevation: 2,
     gap: 16,
+    elevation: 4,
+    shadowColor: "#ff5330",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+  },
+
+   card1: {
+    // backgroundColor: "#fff",
+    // borderRadius: 18,
+    // marginHorizontal: 20,
+    // marginBottom: 18,
+    // elevation: 4,
+    // shadowColor: "#ff5330",
+    // shadowOpacity: 0.1,
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowRadius: 8,
+    // paddingVertical: 8,
   },
 
   cardText: {

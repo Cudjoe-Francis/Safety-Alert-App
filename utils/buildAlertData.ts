@@ -24,9 +24,11 @@ export interface AlertData {
   userName: string;
   serviceType: string;
   time: any;
-  location: string;
-  lat: number;
-  lng: number;
+  location: {
+    lat: number;
+    lng: number;
+    address: string;
+  };
   message: string;
   user: UserDetails;
   emergencyContacts: EmergencyContact[];
@@ -42,16 +44,18 @@ export function buildAlertData(
   const userName = `${user.firstName} ${
     user.middleName ? user.middleName + " " : ""
   }${user.lastName}`;
-  const message = `This is ${userName} at ${location.address} and I'm in danger. Kindly help me.`;
+  const message = `This is ${userName} at [${location.address}] and I'm in danger. Kindly help me.`;
 
   return {
     userId,
     userName,
     serviceType,
     time: new Date(),
-    location: location.address,
-    lat: location.lat,
-    lng: location.lng,
+    location: {
+      lat: location.lat,
+      lng: location.lng,
+      address: location.address,
+    },
     message,
     user,
     emergencyContacts,

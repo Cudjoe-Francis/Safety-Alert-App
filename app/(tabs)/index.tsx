@@ -6,7 +6,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getDatabase, off, onValue, ref } from "firebase/database";
+import { getDatabase, off, onValue, ref, push } from "firebase/database";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
   useListenForReplies();
 
   // ////////////////////////////////
-const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
   const [address, setAddress] = useState<string>("");
@@ -268,51 +268,65 @@ const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
 
   const handleSosPress = async () => {
     setIsSosActive(true);
-    addNotification("SOS activated! Sending SMS to contacts...");
 
     let message = "Hello, I'm in danger now currently at this location";
     if (userLocation) {
       message += `: https://maps.google.com/?q=${userLocation.latitude},${userLocation.longitude}`;
     }
 
+    // Get all emergency contact phone numbers
+    const phoneNumbers = emergencyContacts.map((c) => c.phone).filter(Boolean);
+
+    // Open SMS app with all contacts and message
+    let smsUrl = "";
+    if (Platform.OS === "ios") {
+      smsUrl = `sms:${phoneNumbers.join(",")}&body=${encodeURIComponent(
+        message
+      )}`;
+    } else {
+      smsUrl = `sms:${phoneNumbers.join(";")}?body=${encodeURIComponent(
+        message
+      )}`;
+    }
+
     try {
-      await axios.post("http://172.20.10.6:5000/send-sos", {
-        contacts: emergencyContacts,
-        message,
-      });
-      addNotification("SMS sent to emergency contacts!");
+      await Linking.openURL(smsUrl);
     } catch (error) {
-      addNotification("Failed to send SMS.");
+      Alert.alert("Error", "Unable to open SMS app.");
       console.error(error);
     }
 
-    // Start SOS pulse animation and store the animation instance
-    sosAnimationRef.current = Animated.loop(
-      Animated.sequence([
-        Animated.timing(sosPulse, {
-          toValue: 1.2,
-          duration: 400,
-          easing: Easing.ease,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sosPulse, {
-          toValue: 1,
-          duration: 400,
-          easing: Easing.ease,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    sosAnimationRef.current.start(); // Start the animation
+    // Track SOS in history
+    const userId = getAuth().currentUser?.uid;
+    if (userId) {
+      const db = getDatabase();
+      const historyRef = ref(db, `users/${userId}/history`);
+      await push(historyRef, {
+        type: "sos",
+        message,
+        contacts: phoneNumbers,
+        time: Date.now(),
+        location: userLocation
+          ? {
+              lat: userLocation.latitude,
+              lng: userLocation.longitude,
+              address: address || "Unknown address",
+            }
+          : { lat: 0, lng: 0, address: "Unknown address" },
+      });
+    }
 
-    // Simulate notification and stop animation after a delay
+    // Optional: Notification
+    addNotification({
+      id: Date.now().toString(),
+      title: "SOS",
+      message: "SOS alert sent via SMS!",
+      timestamp: new Date().toLocaleString(),
+      read: false,
+    });
+
     setTimeout(() => {
-      if (sosAnimationRef.current) {
-        sosAnimationRef.current.stop(); // Stop the animation using the stored ref
-      }
-      sosPulse.setValue(1); // Reset scale
       setIsSosActive(false);
-      console.log("SOS pressed. No SMS sent.");
     }, 3000);
   };
 
@@ -418,6 +432,18 @@ const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
 
       // 4. Send to Firestore
       await sendAlertToFirestore(alert);
+
+      // 5. Add to user's history in Realtime Database
+      const db = getDatabase();
+      if (userId) {
+        const historyRef = ref(db, `users/${userId}/history`);
+        await push(historyRef, {
+          ...alert,
+          type: serviceType.toLowerCase(),
+          time: Date.now(),
+          location: alert.location, // <-- This should be { lat, lng, address }
+        });
+      }
 
       console.log("Alert sent to Firestore!");
 

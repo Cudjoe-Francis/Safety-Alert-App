@@ -133,6 +133,24 @@ const MenuComponents = () => {
           ),
         }}
       />
+
+      <Stack.Screen
+        name="HistoryDetails"
+        options={{
+          title: "History Details",
+          headerShown: true,
+          headerTintColor: isDarkMode ? "#fff" : "#000",
+          headerLeft: () => (
+            <Ionicons
+              onPress={() => router.back()}
+              style={{ marginRight: 16 }}
+              name="chevron-back"
+              size={24}
+              color="#ff5330"
+            />
+          ),
+        }}
+      />
     </Stack>
   );
 };

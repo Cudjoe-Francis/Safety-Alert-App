@@ -87,7 +87,7 @@ const Menu = () => {
           </TouchableOpacity>
 
           {/* Incident Reports */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
            style={[styles.card, { backgroundColor: "#fff" }]}
             onPress={() => router.push("/(menu-components)/incident-reports")}
           >
@@ -95,7 +95,7 @@ const Menu = () => {
             <Text style={[styles.cardText, { color: theme.text }]}>
               Incident Reports
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Notifications */}
           <TouchableOpacity

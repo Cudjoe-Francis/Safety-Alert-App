@@ -66,7 +66,6 @@ export default function LocationTracker () {
         />
       ) : (
         <>
-        {/* ///////////////////////////////////////////// */}
           <Text style={styles.address}>{address}</Text>
           {location && (
             <MapView

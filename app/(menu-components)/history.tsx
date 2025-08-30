@@ -2,14 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
-import { getDatabase, onValue, ref } from "firebase/database";
+import { getDatabase, onValue, ref, remove } from "firebase/database";
 import {
-  collection,
+  // collection,
   deleteDoc,
   doc,
-  getDocs,
-  query,
-  where,
+  // getDocs,
+  // query,
+  // where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -28,7 +28,7 @@ import {
 } from "react-native-gesture-handler";
 import { firestore } from "../../firebaseConfig";
 import { useTheme } from "../../themeContext";
-import { getUserHistory } from "../../utils/getUserHistory";
+// import { getUserHistory } from "../../utils/getUserHistory";
 
 const serviceColors: Record<string, string> = {
   police: "#121a68",
@@ -36,7 +36,7 @@ const serviceColors: Record<string, string> = {
   fire: "red",
   campus: "#5d3fd3",
   incident: "#ff5330",
-  sos: "#ff5330", // Add SOS color
+  sos: "#ff5330",
 };
 
 const serviceIcons: Record<string, any> = {
@@ -45,13 +45,14 @@ const serviceIcons: Record<string, any> = {
   fire: "flame",
   campus: "school",
   incident: "alert-circle",
-  sos: "sos", // Add SOS icon
+  sos: "call",
 };
 
 const History = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const { theme, isDarkMode } = useTheme();
   const navigation = useNavigation();
   const router = useRouter();
@@ -116,42 +117,65 @@ const History = () => {
       const userId = auth.currentUser?.uid;
       if (!userId) return;
 
-      // Try deleting from alerts
+      // Delete from Firestore (alerts)
       try {
         await deleteDoc(doc(firestore, "alerts", confirmDeleteId));
       } catch {}
-      // Try deleting from incidentReports
+
+      // Delete from Firestore (incidentReports)
       try {
         await deleteDoc(doc(firestore, "incidentReports", confirmDeleteId));
       } catch {}
 
+      // Delete from Realtime Database (history)
+      try {
+        const db = getDatabase();
+        const historyRef = ref(
+          db,
+          `users/${userId}/history/${confirmDeleteId}`
+        );
+        await remove(historyRef);
+      } catch {}
+
       setConfirmDeleteId(null);
 
-      // Re-fetch history after deletion
-      setLoading(true);
-      const userAlerts = await getUserHistory();
-      let incidentReports: any[] = [];
-      if (userId) {
-        const incidentQuery = query(
-          collection(firestore, "incidentReports"),
-          where("userId", "==", userId)
-        );
-        const incidentSnapshot = await getDocs(incidentQuery);
-        incidentReports = incidentSnapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-          type: "incident",
-        }));
-      }
-      const allHistory = [
-        ...userAlerts.map((h) => ({ ...h, type: h.serviceType })),
-        ...incidentReports,
-      ].sort((a, b) => b.time?.seconds - a.time?.seconds);
-      setHistory(allHistory);
+      // Refresh history after deletion
+      handleRefresh();
       setLoading(false);
     } catch (error) {
       setConfirmDeleteId(null);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    const userId = getAuth().currentUser?.uid;
+    if (!userId) {
+      setRefreshing(false);
+      return;
+    }
+    const db = getDatabase();
+    const historyRef = ref(db, `users/${userId}/history`);
+    onValue(
+      historyRef,
+      (snapshot) => {
+        const data = snapshot.val() || {};
+        const arr = Object.entries(data).map(([key, value]) => ({
+          id: key,
+          ...value,
+        }));
+        setHistory(arr.reverse());
+        setRefreshing(false);
+      },
+      { onlyOnce: true }
+    );
+  };
+
+  const handleHistoryPress = (item: any) => {
+    router.push({
+      pathname: "/(menu-components)/HistoryDetails",
+      params: { history: JSON.stringify(item) },
+    });
   };
 
   // --- Swipeable Delete Button ---
@@ -167,43 +191,49 @@ const History = () => {
 
   const renderItem = ({ item }: { item: any }) => (
     <Swipeable renderRightActions={() => renderRightActions(item)}>
-      <View
-        style={[
-          styles.card,
-          {
-            borderLeftColor: serviceColors[item.type] || "#888",
-            borderLeftWidth: 6,
-          },
-        ]}
-      >
-        <Ionicons
-          name={serviceIcons[item.type] || "document"}
-          size={28}
-          color={serviceColors[item.type] || "#888"}
-          style={{ marginRight: 12 }}
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>
-            {item.type === "incident"
-              ? "Incident Report"
-              : item.serviceType?.charAt(0).toUpperCase() +
-                item.serviceType?.slice(1)}
-          </Text>
-          <Text style={styles.message} numberOfLines={2}>
-            {item.message}
-          </Text>
-          <Text style={styles.time}>
-            {item.time
-              ? new Date(item.time.seconds * 1000).toLocaleString()
-              : ""}
-          </Text>
-          {item.reply && (
-            <Text style={styles.reply}>
-              Reply: {item.reply.message || "Received"}
+      <TouchableOpacity onPress={() => handleHistoryPress(item)}>
+        <View
+          style={[
+            styles.card,
+            {
+              borderLeftColor: serviceColors[item.type] || "#888",
+              borderLeftWidth: 6,
+            },
+          ]}
+        >
+          <Ionicons
+            name={serviceIcons[item.type] || "document"}
+            size={28}
+            color={serviceColors[item.type] || "#888"}
+            style={{ marginRight: 12 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>
+              {item.type === "sos"
+                ? "SOS"
+                : item.serviceType?.charAt(0).toUpperCase() +
+                  item.serviceType?.slice(1)}
             </Text>
-          )}
+            <Text style={styles.message} numberOfLines={2}>
+              {item.message}
+            </Text>
+            <Text style={styles.time}>
+              {item.time
+                ? typeof item.time === "object" && item.time.seconds
+                  ? new Date(item.time.seconds * 1000).toLocaleString()
+                  : typeof item.time === "number"
+                  ? new Date(item.time).toLocaleString()
+                  : ""
+                : ""}
+            </Text>
+            {item.reply && (
+              <Text style={styles.reply}>
+                Reply: {item.reply.message || "Received"}
+              </Text>
+            )}
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </Swipeable>
   );
 
@@ -274,6 +304,8 @@ const History = () => {
               keyExtractor={(item) => item.id}
               renderItem={renderItem}
               ListEmptyComponent={<Text>No history found.</Text>}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
             />
           </>
         )}
@@ -285,7 +317,12 @@ const History = () => {
 export default History;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9f9f9", paddingTop: 18 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+    paddingVertical: 18,
+  },
+
   card: {
     flexDirection: "row",
     alignItems: "flex-start",

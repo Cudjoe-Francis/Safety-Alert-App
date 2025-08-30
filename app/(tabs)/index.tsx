@@ -29,6 +29,8 @@ import { sendAlertToFirestore } from "../../utils/sendAlert";
 import { useTheme } from "..//../themeContext";
 import UserDetailsModal from "../components/user-details";
 import { useNotification } from "../context/NotificationContext";
+import { getCurrentLocation } from "../../utils/getLocation";
+import { reverseGeocode } from "../../utils/reverseGeocode";
 
 type ServiceId = "Hospital" | "Police" | "Fire" | "Campus";
 // type ServiceId = "hospital" | "police" | "fire" | "campus";
@@ -41,6 +43,15 @@ interface Service {
 
 const Home: React.FC = () => {
   useListenForReplies();
+
+  // ////////////////////////////////
+const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
+  const [address, setAddress] = useState<string>("");
+  // const [loading, setLoading] = useState(true);
+
+  // ///////////////////////////////
 
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [showHelpPopup, setShowHelpPopup] = useState(false);
@@ -156,9 +167,7 @@ const Home: React.FC = () => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setLocationErrorMsg(
-          "Permission to access location was denied. Cannot find nearby places."
-        );
+        setLocationErrorMsg("Permission to access location was denied.");
         console.error("Location permission denied.");
         return;
       }
@@ -170,6 +179,12 @@ const Home: React.FC = () => {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         });
+        // Get address using reverseGeocode
+        const addr = await reverseGeocode(
+          location.coords.latitude,
+          location.coords.longitude
+        );
+        setAddress(addr);
         console.log("User Location fetched:", location.coords);
       } catch (error) {
         setLocationErrorMsg(
@@ -356,7 +371,7 @@ const Home: React.FC = () => {
         ? {
             lat: userLocation.latitude,
             lng: userLocation.longitude,
-            address: "Unknown address",
+            address: address || "Unknown address", // Use the real address here
           }
         : { lat: 0, lng: 0, address: "Unknown address" };
 
@@ -532,6 +547,8 @@ const Home: React.FC = () => {
           >
             Emergency Assistance
           </Text>
+
+          {/* <Text style={styles.address}>Address: {address}</Text> */}
 
           {/* Middle Buttons View for emergency services */}
           <View style={styles.middleContainer}>

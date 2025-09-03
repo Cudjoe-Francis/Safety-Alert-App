@@ -68,10 +68,7 @@ const CountdownTimerScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          <View style={styles.headerRow}>
-            <MaterialIcons name="timer" size={28} color="#ff5330" />
-            <Text style={styles.title}>Countdown Timer</Text>
-          </View>
+          
           <Text style={styles.desc}>
             Select how long the app should wait before sending an emergency
             alert after activation.
@@ -99,7 +96,7 @@ const CountdownTimerScreen = () => {
                   <MaterialIcons
                     name="check-circle"
                     size={22}
-                    color="#ff5330"
+                    color="#b0ff30ff"
                     style={{ marginLeft: 8 }}
                   />
                 )}
@@ -137,17 +134,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#222",
-    marginLeft: 10,
-  },
+
   desc: {
     fontSize: 15,
     color: "#555",

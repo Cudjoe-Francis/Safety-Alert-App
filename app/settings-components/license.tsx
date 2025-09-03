@@ -10,10 +10,7 @@ const LicencesScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          <View style={styles.headerRow}>
-            <MaterialIcons name="gavel" size={28} color="#ff5330" />
-            <Text style={styles.title}>Licenses & Legal</Text>
-          </View>
+          
           <Text style={styles.text}>
             This app and its source code are licensed under the MIT License.
             {"\n\n"}
@@ -56,21 +53,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#222",
-    marginLeft: 10,
-  },
+  
   text: {
     fontSize: 16,
     color: "#333",
     lineHeight: 26,
-    marginTop: 8,
   },
 });

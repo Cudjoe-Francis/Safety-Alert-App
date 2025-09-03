@@ -239,7 +239,7 @@ const AuthLayout = () => {
         name="license"
         options={{
           headerShown: true,
-          title: "License",
+          title: "Licenses & Legal",
           headerTintColor: "#000",
           headerStyle: { backgroundColor: "#fff" },
           headerTitleStyle: { fontWeight: "bold" },

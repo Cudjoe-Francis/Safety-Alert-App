@@ -3,9 +3,10 @@ import React, { createContext, ReactNode, useContext, useState } from "react";
 export type AppNotification = {
   id: string;
   message: string;
-  timestamp: Date;
+  timestamp: Date | string | number | undefined;
   read: boolean;
   replyDetails?: any;
+  type?: "alert-reply" | "incident-reply";
 };
 
 interface NotificationContextType {

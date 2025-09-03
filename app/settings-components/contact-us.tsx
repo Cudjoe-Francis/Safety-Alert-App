@@ -33,12 +33,9 @@ const ContactUsScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          <View style={styles.headerRow}>
-            <MaterialIcons name="contact-support" size={28} color="#ff5330" />
-            <Text style={styles.title}>Contact Us</Text>
-          </View>
+          
           <Text style={styles.text}>
-            We're here to help! Reach out to us using any of the methods below.
+            We&apos;re here to help! Reach out to us using any of the methods below.
           </Text>
           <View style={styles.contactList}>
             <TouchableOpacity
@@ -103,11 +100,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-  },
+  
   title: {
     fontSize: 20,
     fontWeight: "bold",

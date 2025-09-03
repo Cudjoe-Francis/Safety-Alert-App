@@ -3,20 +3,19 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Image,
   ImageBackground,
 } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { push } from "expo-router/build/global-state/routing";
-import { router } from "expo-router";
+// import { router } from "expo-router";
 
-const googleLogo = require("..//../assets/images/google.png");
-const appleLogo = require("..//../assets/images/images.png");
-const facebookLogo = require("..//../assets/images/facebook.png");
+// const googleLogo = require("..//../assets/images/google.png");
+// const appleLogo = require("..//../assets/images/images.png");
+// const facebookLogo = require("..//../assets/images/facebook.png");
 
-const backgroundImage = require("..//../assets/images/flashBackground.png");
+const backgroundImage = require("..//../assets/images/Safety_Alert_App_Background.png");
 
 const FlashScreen = () => {
   return (
@@ -44,29 +43,23 @@ const FlashScreen = () => {
             <Text style={[styles.signInText, styles.signUpText]}>SIGN UP</Text>
           </TouchableOpacity>
 
-          <Text style={styles.optionText}>Signup or Login with</Text>
+          {/* <Text style={styles.optionText}>Signup or Login with</Text> */}
 
-          <View style={styles.optionContainer}>
+          {/* <View style={styles.optionContainer}>
             <TouchableOpacity style={styles.icon}>
               <Image source={googleLogo} style={styles.img} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.icon, {  }]}>
+            <TouchableOpacity style={[styles.icon, {}]}>
               <Image source={appleLogo} style={styles.img} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.icon}>
               <Image source={facebookLogo} style={styles.img} />
             </TouchableOpacity>
-
-            {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-            <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
-              <Text style={{ fontSize: 40 }}>Home</Text>
-            </TouchableOpacity>
-            {/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-          </View>
+          </View> */}
         </View>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
       </SafeAreaView>
     </ImageBackground>
   );
@@ -77,7 +70,7 @@ export default FlashScreen;
 const styles = StyleSheet.create({
   bgImage: {
     flex: 1,
-    resizeMode: "cover",
+    // resizeMode: "contain",
   },
 
   container: {
@@ -85,11 +78,15 @@ const styles = StyleSheet.create({
   },
 
   topContainer: {
-    flex: 0.6,
+    flex: 0.9,
+    // backgroundColor: "lightgreen",
+    paddingTop: 50,
   },
 
   bottomContainer: {
-    flex: 0.42,
+    // flex: 0.2,
+    // backgroundColor: "#ff340cff",
+    // top: 50,
   },
 
   img: {
@@ -99,8 +96,8 @@ const styles = StyleSheet.create({
   },
 
   welcomeText: {
-    color: "#fff",
-    fontSize: 16,
+    color: "#000",
+    fontSize: 18,
     textAlign: "center",
     paddingTop: 10,
     fontWeight: "400",
@@ -109,7 +106,7 @@ const styles = StyleSheet.create({
 
   safetyText: {
     paddingTop: 20,
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     fontStyle: "normal",
   },
@@ -121,9 +118,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 340,
     borderRadius: 20,
-    backgroundColor: "#FF5330",
-    // backgroundColor: "#ff5330",
-    paddingVertical: 10,
+    backgroundColor: "#EE3322",/////////////
+    paddingVertical: 14,
   },
 
   signInText: {
@@ -134,11 +130,11 @@ const styles = StyleSheet.create({
   },
 
   signUpContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#EE3322",
   },
 
   signUpText: {
-    color: "#000",
+    color: "#fff",
   },
 
   optionText: {

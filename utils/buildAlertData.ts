@@ -44,7 +44,7 @@ export function buildAlertData(
   const userName = `${user.firstName} ${
     user.middleName ? user.middleName + " " : ""
   }${user.lastName}`;
-  const message = `This is ${userName} at [${location.address}] and I'm in danger. Kindly help me.`;
+  const message = `This is ${userName} at ${location.address} and I'm in danger. Kindly help me.`;
 
   return {
     userId,

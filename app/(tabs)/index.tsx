@@ -2,7 +2,6 @@ import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -29,7 +28,6 @@ import { sendAlertToFirestore } from "../../utils/sendAlert";
 import { useTheme } from "..//../themeContext";
 import UserDetailsModal from "../components/user-details";
 import { useNotification } from "../context/NotificationContext";
-import { getCurrentLocation } from "../../utils/getLocation";
 import { reverseGeocode } from "../../utils/reverseGeocode";
 
 type ServiceId = "Hospital" | "Police" | "Fire" | "Campus";
@@ -631,7 +629,6 @@ const Home: React.FC = () => {
                         style={styles.cancelBtn}
                         onPress={handleOpenCancelModal}
                       >
-                        <MaterialIcons name="cancel" size={28} color="#fff" />
                         <Text style={styles.cancelBtnText}>Cancel</Text>
                       </TouchableOpacity>
                     )}
@@ -869,25 +866,27 @@ const styles = StyleSheet.create({
   // Update countdown style for perfect centering
   countdown: {
     position: "absolute",
-    top: "50%",
+    top: "60%",
     left: "50%",
     width: 60,
     height: 60,
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(255,83,48,0.90)",
     color: "#fff",
     fontSize: 32,
     fontWeight: "bold",
-    borderRadius: 30,
+    borderRadius: 10,
     textAlign: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 6,
-    zIndex: 10,
+    zIndex: 10, 
     transform: [{ translateX: -30 }, { translateY: -30 }],
+    paddingTop: 13,
   },
 
   assistanceBtnText: {
@@ -926,7 +925,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 15,
@@ -935,9 +934,9 @@ const styles = StyleSheet.create({
 
   cancelBtnText: {
     color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginTop: 4,
+    fontWeight: "800",
+    fontSize: 18,
+    marginTop: 70,
   },
 
   modalOverlay: {

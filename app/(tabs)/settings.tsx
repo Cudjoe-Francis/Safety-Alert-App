@@ -314,7 +314,8 @@ const Settings = () => {
             </View>
           </TouchableOpacity>
           {/* Alert Trigger Method */}
-          <TouchableOpacity
+
+          {/* <TouchableOpacity
             onPress={() =>
               router.push("/settings-components/alert-trigger-method")
             }
@@ -330,12 +331,13 @@ const Settings = () => {
               <Text style={styles.rowText}>Alert Trigger Method</Text>
               <Entypo name="chevron-small-right" size={24} color="#bbb" />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+
           {/* Countdown Timer */}
           <TouchableOpacity
             onPress={() => router.push("/settings-components/countdown-timer")}
           >
-            <View style={styles.row}>
+            <View style={[styles.row, { borderBottomWidth: 0 }]}>
               <View style={iconBg("#2196f3")}>
                 <MaterialCommunityIcons
                   name="timer-outline"
@@ -364,7 +366,7 @@ const Settings = () => {
           </View> */}
 
           {/* Enable Preferences */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() =>
               router.push("/settings-components/enable-preferences")
             }
@@ -376,7 +378,8 @@ const Settings = () => {
               <Text style={styles.rowText}>Enable Preferences</Text>
               <Entypo name="chevron-small-right" size={24} color="#bbb" />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+
         </View>
         {/* Support Section */}
         <View style={styles.sectionHeader}>
@@ -465,8 +468,9 @@ const Settings = () => {
               <Entypo name="chevron-small-right" size={24} color="#bbb" />
             </View>
           </TouchableOpacity>
+
           {/* SOS Message Customization */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() =>
               router.push("/settings-components/sos-msg-customization")
             }
@@ -482,7 +486,8 @@ const Settings = () => {
               <Text style={styles.rowText}>SOS Message Customization</Text>
               <Entypo name="chevron-small-right" size={24} color="#bbb" />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+
           {/* License */}
           <TouchableOpacity
             onPress={() => router.push("/settings-components/license")}
@@ -495,7 +500,7 @@ const Settings = () => {
                   color="#fff"
                 />
               </View>
-              <Text style={styles.rowText}>License</Text>
+              <Text style={styles.rowText}>Licenses & Legal</Text>
               <Entypo name="chevron-small-right" size={24} color="#bbb" />
             </View>
           </TouchableOpacity>

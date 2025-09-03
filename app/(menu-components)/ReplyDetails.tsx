@@ -2,6 +2,29 @@ import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+function formatTimestamp(ts: any): string {
+  if (!ts) return "";
+  try {
+    if (
+      typeof ts === "object" &&
+      ts !== null &&
+      typeof ts.toDate === "function"
+    ) {
+      return ts.toDate().toLocaleString();
+    }
+    if (typeof ts === "object" && ts.seconds) {
+      return new Date(ts.seconds * 1000).toLocaleString();
+    }
+    if (typeof ts === "string" || typeof ts === "number") {
+      const date = new Date(ts);
+      return isNaN(date.getTime()) ? String(ts) : date.toLocaleString();
+    }
+    return String(ts);
+  } catch {
+    return "";
+  }
+}
+
 const ReplyDetails = () => {
   const { reply, time } = useLocalSearchParams();
   const replyObj = reply ? JSON.parse(reply as string) : {};
@@ -19,29 +42,23 @@ const ReplyDetails = () => {
           <Text style={styles.value}>{replyObj.incident.description}</Text>
           <Text style={styles.label}>Reported At:</Text>
           <Text style={styles.value}>
-            {replyObj.incident.time
-              ? new Date(replyObj.incident.time.seconds * 1000).toLocaleString()
-              : ""}
+            {formatTimestamp(replyObj.incident.time)}
           </Text>
           <Text style={styles.label}>Reply:</Text>
           <Text style={styles.value}>{replyObj.message}</Text>
           <Text style={styles.label}>Reply Time:</Text>
           <Text style={styles.value}>
-            {replyObj.timestamp
-              ? new Date(replyObj.timestamp.seconds * 1000).toLocaleString()
-              : ""}
+            {formatTimestamp(replyObj.timestamp)}
           </Text>
         </>
       ) : (
         <>
           <Text style={styles.label}>Message:</Text>
           <Text style={styles.value}>{replyObj.message}</Text>
-            <Text style={styles.label}>Received at:</Text>
-            <Text style={styles.value}>{time || ""}</Text>
+          <Text style={styles.label}>Received at:</Text>
+          <Text style={styles.value}>{time || ""}</Text>
           <Text style={styles.value}>
-            {replyObj.timestamp
-              ? new Date(replyObj.timestamp.seconds * 1000).toLocaleString()
-              : ""}
+            {formatTimestamp(replyObj.timestamp)}
           </Text>
         </>
       )}

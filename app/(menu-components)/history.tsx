@@ -7,9 +7,6 @@ import {
   // collection,
   deleteDoc,
   doc,
-  // getDocs,
-  // query,
-  // where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -217,15 +214,7 @@ const History = () => {
             <Text style={styles.message} numberOfLines={2}>
               {item.message}
             </Text>
-            <Text style={styles.time}>
-              {item.time
-                ? typeof item.time === "object" && item.time.seconds
-                  ? new Date(item.time.seconds * 1000).toLocaleString()
-                  : typeof item.time === "number"
-                  ? new Date(item.time).toLocaleString()
-                  : ""
-                : ""}
-            </Text>
+            <Text style={styles.time}>{formatTimestamp(item.time)}</Text>
             {item.reply && (
               <Text style={styles.reply}>
                 Reply: {item.reply.message || "Received"}
@@ -419,3 +408,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+function formatTimestamp(ts: any): string {
+  if (!ts) return "";
+  try {
+    if (
+      typeof ts === "object" &&
+      ts !== null &&
+      typeof ts.toDate === "function"
+    ) {
+      return ts.toDate().toLocaleString();
+    }
+    if (typeof ts === "object" && ts.seconds) {
+      return new Date(ts.seconds * 1000).toLocaleString();
+    }
+    if (typeof ts === "string" || typeof ts === "number") {
+      const date = new Date(ts);
+      return isNaN(date.getTime()) ? String(ts) : date.toLocaleString();
+    }
+    return String(ts);
+  } catch {
+    return "";
+  }
+}

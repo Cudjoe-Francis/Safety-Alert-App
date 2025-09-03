@@ -344,6 +344,7 @@
 // });
 
 // import { replace } from "expo-router/build/global-state/routing";
+
 import { StatusBar } from "expo-status-bar";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import { ref as dbRef, set as dbSet, getDatabase } from "firebase/database";
@@ -364,6 +365,7 @@ import {
   View,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { Ionicons } from "@expo/vector-icons";
 
 const SignUp = () => {
   // State variables for form fields
@@ -372,6 +374,9 @@ const SignUp = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   // State variables for error messages
   const [firstNameError, setFirstNameError] = useState<string>("");
@@ -570,35 +575,79 @@ const SignUp = () => {
             ) : null}
 
             <Text style={styles.text}>Password</Text>
-            <TextInput
-              style={[styles.input, passwordError ? styles.inputError : null]}
-              secureTextEntry
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (passwordError) validatePassword(text);
-              }}
-              onBlur={() => validatePassword(password)}
-            />
+
+            <View
+              style={[
+                styles.passwordContainer,
+                passwordError ? styles.inputError : null,
+              ]}
+            >
+              <TextInput
+                style={styles.passwordInput}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (passwordError) validatePassword(text);
+                  setAuthError("");
+                }}
+                onBlur={() => validatePassword(password)}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                // style={{ padding: 5 }}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={28}
+                  color="#555"
+                  // style={{ marginRight: 0 }}
+                />
+              </TouchableOpacity>
+            </View>
             {passwordError ? (
               <Text style={styles.errorText}>{passwordError}</Text>
             ) : null}
 
             <Text style={styles.text}>Confirm Password</Text>
-            <TextInput
+
+
+            <View
               style={[
-                styles.input,
-                confirmPasswordError ? styles.inputError : null,
+                styles.passwordContainer,
+                passwordError ? styles.inputError : null,
               ]}
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                if (confirmPasswordError)
-                  validateConfirmPassword(text, password);
-              }}
-              onBlur={() => validateConfirmPassword(confirmPassword, password)}
-            />
+            >
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  confirmPasswordError ? styles.inputError : null,
+                ]}
+                secureTextEntry={!showConfirmPassword}
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (confirmPasswordError)
+                    validateConfirmPassword(text, password);
+                }}
+                onBlur={() =>
+                  validateConfirmPassword(confirmPassword, password)
+                }
+              />
+
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                // style={{ padding: 5 }}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? "eye-off" : "eye"}
+                  size={28}
+                  color="#555"
+                  // style={{ marginRight: 0 }}
+                />
+              </TouchableOpacity>
+            </View>
+
             {confirmPasswordError ? (
               <Text style={styles.errorText}>{confirmPasswordError}</Text>
             ) : null}
@@ -666,7 +715,22 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: "red",
   },
-  
+
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "#949494",
+    marginBottom: 28,
+    paddingBottom: 2,
+  },
+
+  passwordInput: {
+    flex: 1,
+    fontSize: 20,
+    paddingVertical: Platform.OS === "ios" ? 6 : 4,
+  },
+
   errorText: {
     color: "red",
     fontSize: 12,
@@ -686,7 +750,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     width: 340,
     alignSelf: "center",
-    marginBottom: 20,
+    marginBottom: 40,
   },
 
   btnText: {

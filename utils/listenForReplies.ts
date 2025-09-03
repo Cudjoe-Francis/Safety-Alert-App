@@ -4,6 +4,25 @@ import { useEffect } from "react";
 import { useNotification } from "../app/context/NotificationContext";
 import { firestore } from "../firebaseFirestore";
 
+function safeTimestamp(ts: any): Date {
+  try {
+    if (!ts) return new Date();
+    if (typeof ts === "object" && typeof ts.toDate === "function") {
+      return ts.toDate();
+    }
+    if (typeof ts === "object" && ts.seconds) {
+      return new Date(ts.seconds * 1000);
+    }
+    if (typeof ts === "string" || typeof ts === "number") {
+      const date = new Date(ts);
+      return isNaN(date.getTime()) ? new Date() : date;
+    }
+    return new Date();
+  } catch {
+    return new Date();
+  }
+}
+
 export function useListenForReplies() {
   const { addNotification } = useNotification();
 
@@ -27,12 +46,15 @@ export function useListenForReplies() {
         );
         onSnapshot(repliesRef, (repliesSnapshot) => {
           repliesSnapshot.forEach((replyDoc) => {
+            const data = replyDoc.data();
+            console.log("Alert reply data:", data); // Debugging log
+
             addNotification({
               id: replyDoc.id,
-              message: replyDoc.data().message,
-              timestamp: replyDoc.data().time.toDate(),
+              message: data?.message || "No message",
+              timestamp: safeTimestamp(data?.time),
               read: false,
-              replyDetails: replyDoc.data(),
+              replyDetails: data,
               type: "alert-reply",
             });
           });
@@ -57,12 +79,15 @@ export function useListenForReplies() {
           );
           onSnapshot(repliesRef, (repliesSnapshot) => {
             repliesSnapshot.forEach((replyDoc) => {
+              const data = replyDoc.data();
+              console.log("Incident reply data:", data); // Debugging log
+
               addNotification({
                 id: replyDoc.id,
-                message: replyDoc.data().message,
-                timestamp: replyDoc.data().time.toDate(),
+                message: data?.message || "No message",
+                timestamp: safeTimestamp(data?.time),
                 read: false,
-                replyDetails: replyDoc.data(),
+                replyDetails: data,
                 type: "incident-reply",
               });
             });

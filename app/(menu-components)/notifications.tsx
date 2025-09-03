@@ -262,7 +262,7 @@ const NotificationScreen = () => {
               : JSON.stringify(item.message)}
           </Text>
           <Text style={styles.notificationTimestamp}>
-            {typeof item.timestamp === "string" ? item.timestamp : ""}
+            {formatTimestamp(item.timestamp)}
           </Text>
         </View>
         {!item.read && <View style={styles.unreadDot} />}
@@ -309,23 +309,60 @@ const NotificationScreen = () => {
     AsyncStorage.setItem("notifications", JSON.stringify(notifications));
   }
 
-  const renderItem = ({ item }: { item: NotificationItem }) => {
-    let displayTime = "";
-    if (item.timestamp) {
-      // If it's a Firestore Timestamp object
+  function formatTimestamp(ts: any): string {
+    if (!ts) return "No date";
+    try {
       if (
-        typeof item.timestamp === "object" &&
-        typeof item.timestamp.toDate === "function"
+        typeof ts === "object" &&
+        ts !== null &&
+        typeof (ts as any).toDate === "function"
       ) {
-        displayTime = item.timestamp.toDate().toLocaleString();
-      } else if (
-        typeof item.timestamp === "string" ||
-        typeof item.timestamp === "number"
-      ) {
-        // If it's a string or number (ISO or epoch)
-        displayTime = new Date(item.timestamp).toLocaleString();
+        return (ts as any).toDate().toLocaleString();
       }
+      if (typeof ts === "object" && ts.seconds) {
+        return new Date(ts.seconds * 1000).toLocaleString();
+      }
+      if (typeof ts === "string" || typeof ts === "number") {
+        const date = new Date(ts);
+        return isNaN(date.getTime()) ? String(ts) : date.toLocaleString();
+      }
+      return String(ts);
+    } catch {
+      return "No date";
     }
+  }
+
+  const renderItem = ({ item }: { item: NotificationItem }) => {
+    let displayTime = "No date";
+    try {
+      if (item.timestamp) {
+        // Firestore Timestamp object
+        if (
+          typeof item.timestamp === "object" &&
+          item.timestamp !== null &&
+          typeof (item.timestamp as any).toDate === "function"
+        ) {
+          displayTime = (item.timestamp as any).toDate().toLocaleString();
+        }
+        // ISO string or number
+        else if (
+          typeof item.timestamp === "string" ||
+          typeof item.timestamp === "number"
+        ) {
+          const date = new Date(item.timestamp);
+          displayTime = isNaN(date.getTime())
+            ? String(item.timestamp)
+            : date.toLocaleString();
+        }
+        // Fallback for other objects
+        else {
+          displayTime = String(item.timestamp);
+        }
+      }
+    } catch (e) {
+      displayTime = "No date";
+    }
+
     return (
       <View style={styles.notificationItem}>
         <View style={styles.iconCtn}>
@@ -492,5 +529,3 @@ const styles = StyleSheet.create({
   message: { fontSize: 15, color: "#444", marginTop: 2 },
   time: { fontSize: 13, color: "#888", marginTop: 6 },
 });
-
-

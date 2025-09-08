@@ -1,6 +1,7 @@
 import { getAuth } from "firebase/auth";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, DocumentChange } from "firebase/firestore";
 import { useEffect } from "react";
+import * as Notifications from "expo-notifications";
 import { useNotification } from "../app/context/NotificationContext";
 import { firestore } from "../firebaseFirestore";
 
@@ -20,6 +21,29 @@ function safeTimestamp(ts: any): Date {
     return new Date();
   } catch {
     return new Date();
+  }
+}
+
+// Function to send push notification with enhanced features
+async function sendPushNotification(title: string, body: string, data?: any) {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data,
+        sound: 'default',
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        vibrate: [0, 250, 250, 250],
+        badge: 1,
+      },
+      trigger: null, // Send immediately
+    });
+    
+    // Log notification for debugging
+    console.log('🔔 Push notification sent:', { title, body, data });
+  } catch (error) {
+    console.error('❌ Error sending push notification:', error);
   }
 }
 
@@ -45,18 +69,32 @@ export function useListenForReplies() {
           "replies"
         );
         onSnapshot(repliesRef, (repliesSnapshot) => {
-          repliesSnapshot.forEach((replyDoc) => {
-            const data = replyDoc.data();
-            console.log("Alert reply data:", data); // Debugging log
+          repliesSnapshot.docChanges().forEach((change: DocumentChange<any>) => {
+            if (change.type === "added") {
+              const data = change.doc.data();
+              console.log("Alert reply data:", data); // Debugging log
 
-            addNotification({
-              id: replyDoc.id,
-              message: data?.message || "No message",
-              timestamp: safeTimestamp(data?.time),
-              read: false,
-              replyDetails: data,
-              type: "alert-reply",
-            });
+              // Send enhanced push notification for new reply
+              sendPushNotification(
+                "🚨 Emergency Reply Received",
+                `Emergency Service Reply: ${data?.message || "No message"}`,
+                { 
+                  replyId: change.doc.id, 
+                  type: "alert-reply",
+                  alertId: alertDoc.id,
+                  timestamp: new Date().toISOString()
+                }
+              );
+
+              addNotification({
+                id: change.doc.id,
+                message: data?.message || "No message",
+                timestamp: safeTimestamp(data?.time),
+                read: false,
+                replyDetails: data,
+                type: "alert-reply",
+              });
+            }
           });
         });
       });
@@ -78,18 +116,32 @@ export function useListenForReplies() {
             "replies"
           );
           onSnapshot(repliesRef, (repliesSnapshot) => {
-            repliesSnapshot.forEach((replyDoc) => {
-              const data = replyDoc.data();
-              console.log("Incident reply data:", data); // Debugging log
+            repliesSnapshot.docChanges().forEach((change: DocumentChange<any>) => {
+              if (change.type === "added") {
+                const data = change.doc.data();
+                console.log("Incident reply data:", data); // Debugging log
 
-              addNotification({
-                id: replyDoc.id,
-                message: data?.message || "No message",
-                timestamp: safeTimestamp(data?.time),
-                read: false,
-                replyDetails: data,
-                type: "incident-reply",
-              });
+                // Send enhanced push notification for new incident reply
+                sendPushNotification(
+                  "📋 Incident Report Reply",
+                  `Authority Response: ${data?.message || "No message"}`,
+                  { 
+                    replyId: change.doc.id, 
+                    type: "incident-reply",
+                    incidentId: incidentDoc.id,
+                    timestamp: new Date().toISOString()
+                  }
+                );
+
+                addNotification({
+                  id: change.doc.id,
+                  message: data?.message || "No message",
+                  timestamp: safeTimestamp(data?.time),
+                  read: false,
+                  replyDetails: data,
+                  type: "incident-reply",
+                });
+              }
             });
           });
         });

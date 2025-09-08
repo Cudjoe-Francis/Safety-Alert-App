@@ -37,10 +37,12 @@ import { useNotification } from "../context/NotificationContext";
 
 type NotificationItem = {
   id: string;
+  title?: string;
   message: string;
   timestamp: string;
   replyDetails?: any;
   type?: "alert-reply" | "incident-reply";
+  read?: boolean;
 };
 
 const NotificationScreen = () => {
@@ -90,6 +92,7 @@ const NotificationScreen = () => {
             notification.request.content.body || "Message from responder.",
           timestamp: new Date().toLocaleString(),
           replyDetails: notification.request.content.data?.reply, // <-- Add this if available
+          read: false,
         };
 
         setNotifications((prev) => [newNotification, ...prev]);
@@ -101,40 +104,8 @@ const NotificationScreen = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const auth = getAuth();
-    const userId = auth.currentUser?.uid;
-    if (!userId) return;
-
-    const alertsQuery = query(
-      collection(firestore, "alerts"),
-      where("userId", "==", userId)
-    );
-
-    const unsubscribeAlerts = onSnapshot(alertsQuery, (alertsSnapshot) => {
-      alertsSnapshot.forEach((alertDoc) => {
-        const repliesRef = collection(
-          firestore,
-          "alerts",
-          alertDoc.id,
-          "replies"
-        );
-        onSnapshot(repliesRef, (repliesSnapshot) => {
-          repliesSnapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-              const replyData = change.doc.data();
-              replyData.id = change.doc.id;
-              addNotificationIfNew(replyData);
-            }
-          });
-        });
-      });
-    });
-
-    return () => {
-      unsubscribeAlerts();
-    };
-  }, []);
+  // Remove this useEffect as it's now handled by useListenForReplies hook
+  // This prevents duplicate listeners and notifications
 
   useEffect(() => {
     AsyncStorage.getItem("notifications").then((data) => {
@@ -146,24 +117,32 @@ const NotificationScreen = () => {
 
   useListenForReplies();
 
-  // Combine push notifications and app notifications
+  // Combine push notifications and app notifications with proper deduplication
   const allNotifications = [
     ...appNotifications.map((n) => ({
       id: n.id.toString(),
-      title: "App Alert",
+      title: "Emergency Reply Received",
       message:
         typeof n.message === "string" ? n.message : JSON.stringify(n.message),
       timestamp:
         typeof n.timestamp === "string"
           ? n.timestamp
-          : n.timestamp.toLocaleString(),
-      replyDetails: n.replyDetails || undefined, // <-- Add this line
+          : n.timestamp?.toLocaleString() || new Date().toLocaleString(),
+      replyDetails: n.replyDetails || undefined,
+      type: n.type || "alert-reply",
+      read: n.read || false,
     })),
     ...notifications,
   ];
 
+  // Enhanced deduplication using both id and message content
   const uniqueNotifications = Array.from(
-    new Map(notifications.map((n) => [n.id, n])).values()
+    new Map(
+      allNotifications.map((n) => [
+        `${n.id}-${n.message?.substring(0, 50)}`, // Use id + message snippet as key
+        n
+      ])
+    ).values()
   );
 
   const animateIn = () => {
@@ -280,29 +259,11 @@ const NotificationScreen = () => {
     </RectButton>
   );
 
+  // This function is no longer needed as notifications are handled by useListenForReplies
+  // Keeping for backward compatibility but it won't be called
   function addNotificationIfNew(reply: any) {
-    setNotifications((prev: NotificationItem[]) => {
-      if (prev.some((n) => n.id === reply.id)) {
-        return prev;
-      }
-
-      // Always use the current time when received
-      const receivedTime = new Date().toLocaleString();
-
-      const updated = [
-        {
-          id: reply.id,
-          title: "Reply",
-          message: reply.message,
-          timestamp: receivedTime, // <-- Always use current time
-          replyDetails: reply,
-          read: false,
-        },
-        ...prev,
-      ];
-      saveNotificationsToStorage(updated);
-      return updated;
-    });
+    // This is now handled by the useListenForReplies hook to prevent duplicates
+    console.log('Legacy addNotificationIfNew called - this should not happen');
   }
 
   function saveNotificationsToStorage(notifications: NotificationItem[]) {
@@ -409,9 +370,11 @@ const NotificationScreen = () => {
         ) : (
           <FlatList
             data={[...uniqueNotifications].sort(
-              (a, b) =>
-                new Date(b.timestamp).getTime() -
-                new Date(a.timestamp).getTime()
+              (a, b) => {
+                const timeA = new Date(a.timestamp).getTime();
+                const timeB = new Date(b.timestamp).getTime();
+                return isNaN(timeB) || isNaN(timeA) ? 0 : timeB - timeA;
+              }
             )}
             keyExtractor={(item) => item.id}
             renderItem={renderNotification}

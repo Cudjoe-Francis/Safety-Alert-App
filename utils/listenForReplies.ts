@@ -1,9 +1,15 @@
 import { getAuth } from "firebase/auth";
 import { collection, onSnapshot, query, where, DocumentChange } from "firebase/firestore";
 import { useEffect } from "react";
-import * as Notifications from "expo-notifications";
 import { useNotification } from "../app/context/NotificationContext";
 import { firestore } from "../firebaseFirestore";
+import { 
+  createEmergencyAlertNotification, 
+  createIncidentReplyNotification, 
+  sendEnhancedNotification,
+  getDeviceTheme,
+  getThemedNotificationColors
+} from "./notificationConfig";
 
 function safeTimestamp(ts: any): Date {
   try {
@@ -24,28 +30,59 @@ function safeTimestamp(ts: any): Date {
   }
 }
 
-// Function to send push notification with enhanced features
-async function sendPushNotification(title: string, body: string, data?: any) {
+// Function to send enhanced push notification with fancy styling
+async function sendEnhancedPushNotification(
+  type: 'emergency-reply' | 'incident-reply',
+  serviceType: string,
+  message: string,
+  responderName?: string,
+  station?: string,
+  additionalData?: any
+) {
   try {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        data,
-        sound: 'default',
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-        vibrate: [0, 250, 250, 250],
-        badge: 1,
-      },
-      trigger: null, // Send immediately
-    });
+    const theme = getDeviceTheme();
+    const colors = getThemedNotificationColors(theme);
     
-    // Log notification for debugging
-    console.log('🔔 Push notification sent:', { title, body, data });
+    let notificationContent;
+    
+    if (type === 'emergency-reply') {
+      notificationContent = createEmergencyAlertNotification(
+        serviceType,
+        message,
+        responderName,
+        station
+      );
+    } else {
+      notificationContent = createIncidentReplyNotification(
+        message,
+        responderName
+      );
+    }
+    
+    // Merge additional data
+    notificationContent.data = {
+      ...notificationContent.data,
+      ...additionalData,
+    };
+    
+    // Apply theme-aware colors
+    notificationContent.color = colors[serviceType.toLowerCase() as keyof typeof colors] || colors.emergency;
+    
+    await sendEnhancedNotification(notificationContent);
+    
+    console.log('🔔 Enhanced push notification sent:', {
+      type,
+      serviceType,
+      message: message.substring(0, 50) + '...',
+      theme,
+    });
   } catch (error) {
-    console.error('❌ Error sending push notification:', error);
+    console.error('❌ Error sending enhanced push notification:', error);
   }
 }
+
+// Track processed notifications to prevent duplicates
+const processedNotifications = new Set<string>();
 
 export function useListenForReplies() {
   const { addNotification } = useNotification();
@@ -71,13 +108,27 @@ export function useListenForReplies() {
         onSnapshot(repliesRef, (repliesSnapshot) => {
           repliesSnapshot.docChanges().forEach((change: DocumentChange<any>) => {
             if (change.type === "added") {
+              const notificationId = `alert-${alertDoc.id}-${change.doc.id}`;
+              
+              // Prevent duplicate notifications
+              if (processedNotifications.has(notificationId)) {
+                return;
+              }
+              processedNotifications.add(notificationId);
+              
               const data = change.doc.data();
               console.log("Alert reply data:", data); // Debugging log
 
+              // Get alert data to determine service type
+              const alertData = alertDoc.data();
+              
               // Send enhanced push notification for new reply
-              sendPushNotification(
-                "🚨 Emergency Reply Received",
-                `Emergency Service Reply: ${data?.message || "No message"}`,
+              sendEnhancedPushNotification(
+                'emergency-reply',
+                alertData?.serviceType || 'emergency',
+                data?.message || "No message",
+                data?.responderName,
+                data?.station,
                 { 
                   replyId: change.doc.id, 
                   type: "alert-reply",
@@ -87,7 +138,7 @@ export function useListenForReplies() {
               );
 
               addNotification({
-                id: change.doc.id,
+                id: notificationId,
                 message: data?.message || "No message",
                 timestamp: safeTimestamp(data?.time),
                 read: false,
@@ -118,13 +169,24 @@ export function useListenForReplies() {
           onSnapshot(repliesRef, (repliesSnapshot) => {
             repliesSnapshot.docChanges().forEach((change: DocumentChange<any>) => {
               if (change.type === "added") {
+                const notificationId = `incident-${incidentDoc.id}-${change.doc.id}`;
+                
+                // Prevent duplicate notifications
+                if (processedNotifications.has(notificationId)) {
+                  return;
+                }
+                processedNotifications.add(notificationId);
+                
                 const data = change.doc.data();
                 console.log("Incident reply data:", data); // Debugging log
 
                 // Send enhanced push notification for new incident reply
-                sendPushNotification(
-                  "📋 Incident Report Reply",
-                  `Authority Response: ${data?.message || "No message"}`,
+                sendEnhancedPushNotification(
+                  'incident-reply',
+                  'authority',
+                  data?.message || "No message",
+                  data?.responderName,
+                  undefined,
                   { 
                     replyId: change.doc.id, 
                     type: "incident-reply",
@@ -134,7 +196,7 @@ export function useListenForReplies() {
                 );
 
                 addNotification({
-                  id: change.doc.id,
+                  id: notificationId,
                   message: data?.message || "No message",
                   timestamp: safeTimestamp(data?.time),
                   read: false,

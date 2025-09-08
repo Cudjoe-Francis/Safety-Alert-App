@@ -5,12 +5,31 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider } from "../themeContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { requestNotificationPermissions } from "../utils/notificationConfig";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   useEffect(() => {
-    Notifications.requestPermissionsAsync();
+    // Initialize enhanced notification system
+    const initializeNotifications = async () => {
+      try {
+        const granted = await requestNotificationPermissions();
+        if (granted) {
+          console.log('✅ Enhanced notification system initialized');
+        } else {
+          console.log('❌ Notification permissions denied');
+          // Fallback to basic permissions
+          await Notifications.requestPermissionsAsync();
+        }
+      } catch (error) {
+        console.error('❌ Error initializing notifications:', error);
+        // Fallback to basic permissions
+        await Notifications.requestPermissionsAsync();
+      }
+    };
+    
+    initializeNotifications();
   }, []);
 
   useEffect(() => {

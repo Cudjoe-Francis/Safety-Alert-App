@@ -26,6 +26,20 @@
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
         }
+      },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "USE_FULL_SCREEN_INTENT"
+      ],
+      "notification": {
+        "icon": "./assets/images/notification-icon.png",
+        "color": "#ff5330",
+        "sound": true,
+        "vibrate": true,
+        "priority": "high",
+        "categoryId": "emergency"
       }
     },
     "web": {
@@ -34,7 +48,18 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#ff5330",
+          "sounds": [
+            "./assets/sounds/emergency-alert.wav",
+            "./assets/sounds/reply-notification.wav"
+          ],
+          "mode": "production"
+        }
+      ],
       "expo-router",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",

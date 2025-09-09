@@ -28,6 +28,20 @@ export default function App() {
           // Fallback to basic permissions
           await Notifications.requestPermissionsAsync();
         }
+        
+        // Test notification to verify system is working
+        console.log('🧪 Testing notification system...');
+        setTimeout(async () => {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '🔔 Safety Alert System Ready',
+              body: 'Push notifications are now active and working properly',
+              data: { test: true },
+            },
+            trigger: null, // Send immediately
+          });
+        }, 2000);
+        
       } catch (error) {
         console.error('❌ Error initializing notifications:', error);
         // Fallback to basic permissions
@@ -84,6 +98,31 @@ export default function App() {
 
     return () => subscription.remove();
   }, [router]);
+
+  useEffect(() => {
+    // Configure notification behavior
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+
+    console.log('🔧 Setting up additional notification handlers in _layout.tsx');
+    
+    // Also handle notifications received while app is in foreground
+    const foregroundSubscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log('📱 Foreground notification received in _layout:', notification);
+      console.log('📱 Notification content:', notification.request.content);
+    });
+
+    return () => {
+      foregroundSubscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     setTimeout(async () => {

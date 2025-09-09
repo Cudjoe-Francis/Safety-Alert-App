@@ -4,28 +4,17 @@ import { Platform } from 'react-native';
 // Configure notification behavior and appearance
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
-    const data = notification.request.content.data;
+    console.log('🔔 Notification received:', notification.request.content.title);
+    console.log('🔔 Notification data:', notification.request.content.data);
     
-    // Only show system notifications for replies
-    if (data?.type === 'emergency-reply' || data?.type === 'incident-reply') {
-      return {
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowBanner: true,
-        shouldShowList: true,
-        priority: Notifications.AndroidNotificationPriority.MAX,
-      };
-    }
-    
-    // Don't show system notifications for other types
+    // Always show notifications - let the app handle filtering
     return {
-      shouldShowAlert: false,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-      shouldShowBanner: false,
-      shouldShowList: false,
-      priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+      priority: Notifications.AndroidNotificationPriority.MAX,
     };
   },
 });

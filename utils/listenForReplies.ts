@@ -81,8 +81,18 @@ async function sendEnhancedPushNotification(
   }
 }
 
-// Track processed notifications to prevent duplicates
-const processedNotifications = new Set<string>();
+// Track processed notifications to prevent duplicates - use Map to store with timestamp
+const processedNotifications = new Map<string, number>();
+
+// Clean up old processed notifications (older than 1 hour)
+function cleanupProcessedNotifications() {
+  const oneHourAgo = Date.now() - (60 * 60 * 1000);
+  for (const [key, timestamp] of processedNotifications.entries()) {
+    if (timestamp < oneHourAgo) {
+      processedNotifications.delete(key);
+    }
+  }
+}
 
 export function useListenForReplies() {
   const { addNotification } = useNotification();
@@ -96,60 +106,113 @@ export function useListenForReplies() {
     }
 
     console.log('🔥 Setting up Firebase listeners for user:', userId);
+    console.log('🔥 Listening to alerts collection for user-specific notifications only');
 
-    // Listen for emergency alert replies
+    // Listen for alert replies in the main alerts collection (where web dashboard stores them)
     const alertsQuery = query(
-      collection(firestore, "emergencyAlerts"),
+      collection(firestore, "alerts"),
       where("userId", "==", userId)
     );
 
+    // Store reply listeners to clean them up properly
+    const replyListeners = new Map<string, () => void>();
+
     const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
       snapshot.docChanges().forEach(async (change: DocumentChange) => {
-        if (change.type === "modified") {
+        if (change.type === "added" || change.type === "modified") {
           const data = change.doc.data();
-          console.log('🚨 Emergency alert updated:', data);
+          console.log('🚨 Alert detected:', change.doc.id, 'Type:', change.type);
+          console.log('🚨 Alert data:', JSON.stringify(data, null, 2));
           
-          if (data.replies && Array.isArray(data.replies)) {
-            const latestReply = data.replies[data.replies.length - 1];
-            if (latestReply && latestReply.id) {
-              const notificationId = `alert-${change.doc.id}-${latestReply.id}`;
-              
-              if (!processedNotifications.has(notificationId)) {
-                processedNotifications.add(notificationId);
-                
-                // Send enhanced push notification
-                await sendEnhancedPushNotification(
-                  'emergency-reply',
-                  data.serviceType || 'emergency',
-                  latestReply.message || 'Emergency response received',
-                  latestReply.responderName,
-                  latestReply.station,
-                  {
-                    alertId: change.doc.id,
-                    replyId: latestReply.id,
-                    serviceType: data.serviceType,
+          // Set up a listener for this specific alert's replies if not already listening
+          if (!replyListeners.has(change.doc.id)) {
+            const repliesQuery = query(collection(firestore, "alerts", change.doc.id, "replies"));
+            
+            const unsubscribeReplies = onSnapshot(repliesQuery, (repliesSnapshot) => {
+              repliesSnapshot.docChanges().forEach(async (replyChange: DocumentChange) => {
+                if (replyChange.type === "added") {
+                  const replyData = replyChange.doc.data();
+                  console.log('📝 NEW REPLY DETECTED - PROCESSING NOTIFICATION');
+                  console.log('📝 Reply data:', JSON.stringify(replyData, null, 2));
+                  console.log('📝 Alert data:', JSON.stringify(data, null, 2));
+                  console.log('📝 Current user ID:', userId);
+                  
+                  const notificationId = `alert-${change.doc.id}-${replyChange.doc.id}`;
+                  console.log('🔔 CREATING NOTIFICATION ID:', notificationId);
+                  
+                  // Clean up old processed notifications periodically
+                  cleanupProcessedNotifications();
+                  
+                  if (!processedNotifications.has(notificationId)) {
+                    processedNotifications.set(notificationId, Date.now());
+                    console.log('✅ PROCESSING NEW REPLY - SENDING NOTIFICATIONS');
+                    
+                    try {
+                      // Send enhanced push notification using the notification config
+                      console.log('🔔 SENDING PUSH NOTIFICATION...');
+                      
+                      const notificationContent = createEmergencyAlertNotification(
+                        data.serviceType || 'emergency',
+                        replyData.message || 'Emergency response received',
+                        replyData.responderName,
+                        replyData.station
+                      );
+                      
+                      // Add additional data
+                      notificationContent.data = {
+                        ...notificationContent.data,
+                        alertId: change.doc.id,
+                        replyId: replyChange.doc.id,
+                        type: 'alert-reply',
+                      };
+                      
+                      await sendEnhancedNotification(notificationContent);
+                      console.log('✅ PUSH NOTIFICATION SENT');
+                    } catch (error) {
+                      console.error('❌ PUSH NOTIFICATION FAILED:', error);
+                      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+                    }
+                    
+                    // Add to in-app notifications with proper reply details
+                    console.log('📱 ADDING TO IN-APP NOTIFICATIONS...');
+                    const notificationData = {
+                      id: notificationId,
+                      title: `${data.serviceType?.toUpperCase() || 'EMERGENCY'} Response Received`,
+                      message: replyData.message || 'Emergency response received',
+                      timestamp: safeTimestamp(replyData.time || replyData.createdAt),
+                      type: "alert-reply" as const,
+                      isRead: false,
+                      serviceType: data.serviceType,
+                      responderName: replyData.responderName,
+                      station: replyData.station,
+                      replyDetails: {
+                        ...replyData,
+                        alertId: change.doc.id,
+                        createdAt: replyData.time || replyData.createdAt,
+                      },
+                    };
+                    
+                    console.log('📱 NOTIFICATION DATA:', JSON.stringify(notificationData, null, 2));
+                    addNotification(notificationData);
+                    console.log('✅ IN-APP NOTIFICATION ADDED');
+                    
+                    console.log('✅ ALL NOTIFICATIONS PROCESSED SUCCESSFULLY');
+                  } else {
+                    console.log('⚠️ Notification already processed:', notificationId);
                   }
-                );
-                
-                // Add to in-app notifications
-                addNotification({
-                  id: notificationId,
-                  title: `${data.serviceType?.toUpperCase() || 'EMERGENCY'} Response Received`,
-                  message: latestReply.message || 'Emergency response received',
-                  timestamp: safeTimestamp(latestReply.timestamp),
-                  type: "emergency-reply",
-                  isRead: false,
-                  serviceType: data.serviceType,
-                  responderName: latestReply.responderName,
-                  station: latestReply.station,
-                });
-              }
-            }
+                }
+              });
+            }, (error) => {
+              console.error('❌ Error listening to replies subcollection:', error);
+            });
+            
+            // Store the unsubscribe function
+            replyListeners.set(change.doc.id, unsubscribeReplies);
           }
         }
       });
     }, (error) => {
-      console.error('❌ Error listening to emergency alerts:', error);
+      console.error('❌ Error listening to alerts:', error);
     });
 
     // Listen for incident report replies
@@ -170,7 +233,7 @@ export function useListenForReplies() {
               const notificationId = `incident-${change.doc.id}-${latestReply.id}`;
               
               if (!processedNotifications.has(notificationId)) {
-                processedNotifications.add(notificationId);
+                processedNotifications.set(notificationId, Date.now());
                 
                 // Send enhanced push notification
                 await sendEnhancedPushNotification(
@@ -207,6 +270,12 @@ export function useListenForReplies() {
     return () => {
       unsubscribeAlerts();
       unsubscribeIncidents();
+      
+      // Clean up all reply listeners
+      replyListeners.forEach((unsubscribe) => {
+        unsubscribe();
+      });
+      replyListeners.clear();
     };
   }, []);
 }

@@ -85,28 +85,30 @@ const NotificationScreen = () => {
   useEffect(() => {
     animateIn();
 
-    // Listener for received push notifications - only for replies
+    // Listener for received push notifications
     const subscriptionReceived = Notifications.addNotificationReceivedListener(
       (notification) => {
+        console.log('📱 Push notification received in notifications screen:', notification.request.content.title);
+        console.log('📱 Notification data:', notification.request.content.data);
+        
         const data = notification.request.content.data;
         
-        // Only process notifications that are replies (emergency-reply or incident-reply)
-        if (data?.type === 'emergency-reply' || data?.type === 'incident-reply') {
-          const newNotification: NotificationItem = {
-            id: notification.request.identifier + "-" + uuid.v4(),
-            title: notification.request.content.title || "Security Alert",
-            message: notification.request.content.body || "Message from responder.",
-            timestamp: new Date().toLocaleString(),
-            replyDetails: data?.reply,
-            type: data?.type,
-            serviceType: data?.serviceType as string,
-            responderName: data?.responderName as string,
-            station: data?.station as string,
-            read: false,
-          };
+        // Process all notifications but log for debugging
+        const newNotification: NotificationItem = {
+          id: notification.request.identifier + "-" + uuid.v4(),
+          title: notification.request.content.title || "Security Alert",
+          message: notification.request.content.body || "Message from responder.",
+          timestamp: new Date().toLocaleString(),
+          replyDetails: data?.reply,
+          type: data?.type as "alert-reply" | "incident-reply" | "emergency-reply",
+          serviceType: data?.serviceType as string,
+          responderName: data?.responderName as string,
+          station: data?.station as string,
+          read: false,
+        };
 
-          setNotifications((prev) => [newNotification, ...prev]);
-        }
+        console.log('📱 Adding notification to list:', newNotification);
+        setNotifications((prev) => [newNotification, ...prev]);
       }
     );
 
@@ -145,7 +147,7 @@ const NotificationScreen = () => {
   const allNotifications = [
     ...appNotifications.map((n) => ({
       id: n.id.toString(),
-      title: "Emergency Reply Received",
+      title: n.title || "Emergency Reply Received",
       message:
         typeof n.message === "string" ? n.message : JSON.stringify(n.message),
       timestamp:
@@ -156,7 +158,10 @@ const NotificationScreen = () => {
             : new Date().toLocaleString(),
       replyDetails: n.replyDetails || undefined,
       type: n.type || "alert-reply",
-      read: n.read || false,
+      read: n.read || n.isRead || false,
+      serviceType: n.serviceType,
+      responderName: n.responderName,
+      station: n.station,
     })),
     ...notifications,
   ];
@@ -240,40 +245,52 @@ const NotificationScreen = () => {
     // Determine service type and icon based on reply details
     const getServiceIcon = () => {
       if (item.type === "incident-reply") return "document-text";
-      // Check for service type in replyDetails or derive from responder name
-      const serviceType = item.replyDetails?.serviceType || 
-        (item.replyDetails?.responderName?.toLowerCase().includes('police') ? 'police' : 
+      // Check for service type in multiple places
+      const serviceType = item.serviceType || 
+        item.replyDetails?.serviceType || 
+        (item.responderName?.toLowerCase().includes('police') ? 'police' : 
+         item.responderName?.toLowerCase().includes('hospital') ? 'hospital' : 
+         item.responderName?.toLowerCase().includes('fire') ? 'fire' : 
+         item.replyDetails?.responderName?.toLowerCase().includes('police') ? 'police' : 
          item.replyDetails?.responderName?.toLowerCase().includes('hospital') ? 'hospital' : 
          item.replyDetails?.responderName?.toLowerCase().includes('fire') ? 'fire' : 'emergency');
       
-      if (serviceType === "police") return "shield";
-      if (serviceType === "hospital") return "medical";
-      if (serviceType === "fire") return "flame";
+      if (serviceType?.toLowerCase() === "police") return "shield";
+      if (serviceType?.toLowerCase() === "hospital") return "medical";
+      if (serviceType?.toLowerCase() === "fire") return "flame";
       return "chatbubble-ellipses";
     };
 
     const getServiceColor = () => {
       if (item.type === "incident-reply") return "#008080";
-      const serviceType = item.replyDetails?.serviceType || 
-        (item.replyDetails?.responderName?.toLowerCase().includes('police') ? 'police' : 
+      const serviceType = item.serviceType || 
+        item.replyDetails?.serviceType || 
+        (item.responderName?.toLowerCase().includes('police') ? 'police' : 
+         item.responderName?.toLowerCase().includes('hospital') ? 'hospital' : 
+         item.responderName?.toLowerCase().includes('fire') ? 'fire' : 
+         item.replyDetails?.responderName?.toLowerCase().includes('police') ? 'police' : 
          item.replyDetails?.responderName?.toLowerCase().includes('hospital') ? 'hospital' : 
          item.replyDetails?.responderName?.toLowerCase().includes('fire') ? 'fire' : 'emergency');
       
-      if (serviceType === "police") return "#1e40af";
-      if (serviceType === "hospital") return "#16a34a";
-      if (serviceType === "fire") return "#dc2626";
+      if (serviceType?.toLowerCase() === "police") return "#1e40af";
+      if (serviceType?.toLowerCase() === "hospital") return "#16a34a";
+      if (serviceType?.toLowerCase() === "fire") return "#dc2626";
       return "#ff5330";
     };
 
     const getServiceName = () => {
-      const serviceType = item.replyDetails?.serviceType || 
-        (item.replyDetails?.responderName?.toLowerCase().includes('police') ? 'police' : 
+      const serviceType = item.serviceType || 
+        item.replyDetails?.serviceType || 
+        (item.responderName?.toLowerCase().includes('police') ? 'police' : 
+         item.responderName?.toLowerCase().includes('hospital') ? 'hospital' : 
+         item.responderName?.toLowerCase().includes('fire') ? 'fire' : 
+         item.replyDetails?.responderName?.toLowerCase().includes('police') ? 'police' : 
          item.replyDetails?.responderName?.toLowerCase().includes('hospital') ? 'hospital' : 
          item.replyDetails?.responderName?.toLowerCase().includes('fire') ? 'fire' : 'emergency');
       
-      if (serviceType === "police") return "Police";
-      if (serviceType === "hospital") return "Hospital";
-      if (serviceType === "fire") return "Fire Department";
+      if (serviceType?.toLowerCase() === "police") return "Police";
+      if (serviceType?.toLowerCase() === "hospital") return "Hospital";
+      if (serviceType?.toLowerCase() === "fire") return "Fire Department";
       return "Emergency Service";
     };
 
@@ -323,8 +340,10 @@ const NotificationScreen = () => {
             <View style={styles.serviceInfo}>
               <Text style={styles.serviceName}>{getServiceName()}</Text>
               <Text style={styles.responderInfo}>
-                {item.replyDetails?.responderName ? `${item.replyDetails.responderName}` : 'Emergency Response'}
-                {item.replyDetails?.station ? ` - ${item.replyDetails.station}` : ''}
+                {(item.responderName || item.replyDetails?.responderName) ? 
+                  `${item.responderName || item.replyDetails?.responderName}` : 'Emergency Response'}
+                {(item.station || item.replyDetails?.station) ? 
+                  ` - ${item.station || item.replyDetails?.station}` : ''}
               </Text>
               {item.replyDetails?.alertId && (
                 <Text style={styles.alertIdText}>
@@ -473,9 +492,14 @@ const NotificationScreen = () => {
           </View>
         ) : (
           <FlatList
-            data={[...uniqueNotifications].sort(
-              (a, b) => {
-                // Get timestamps for comparison
+            data={[...uniqueNotifications]
+              .filter(item => {
+                // Show all notifications - both push notifications and in-app notifications
+                console.log('🔍 Filtering notification:', item.id, 'Type:', item.type, 'Has replyDetails:', !!item.replyDetails);
+                return true; // Show all notifications for debugging
+              })
+              .sort((a, b) => {
+                // Get timestamps for comparison - prioritize replyDetails.createdAt
                 const getTimestamp = (item: NotificationItem) => {
                   // Use replyDetails.createdAt if available (more accurate for replies)
                   if (item.replyDetails?.createdAt) {
@@ -502,8 +526,8 @@ const NotificationScreen = () => {
                 
                 // Sort by newest first (descending order)
                 return timeB - timeA;
-              }
-            )}
+              })
+            }
             keyExtractor={(item) => item.id}
             renderItem={renderNotification}
             contentContainerStyle={{ paddingBottom: 40 }}

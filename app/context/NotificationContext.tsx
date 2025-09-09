@@ -8,7 +8,15 @@ export type AppNotification = {
   timestamp: Date | string | number | undefined;
   read?: boolean;
   isRead?: boolean;
-  replyDetails?: any;
+  replyDetails?: {
+    alertId?: string;
+    responderName?: string;
+    station?: string;
+    message?: string;
+    createdAt?: any;
+    time?: any;
+    [key: string]: any;
+  };
   type?: "alert-reply" | "incident-reply" | "emergency-reply";
   serviceType?: string;
   responderName?: string;

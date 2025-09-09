@@ -7,11 +7,11 @@ const DEVELOPMENT_IP = '192.168.1.175'; // Your actual IP from ipconfig
 
 export const getServerUrl = () => {
   if (Platform.OS === 'web') {
-    return 'http://localhost:3002';
+    return 'http://localhost:3003';
   }
   
   // For mobile devices, use your computer's IP address
-  return `http://${DEVELOPMENT_IP}:3002`;
+  return `http://${DEVELOPMENT_IP}:3003`;
 };
 
 export const API_ENDPOINTS = {

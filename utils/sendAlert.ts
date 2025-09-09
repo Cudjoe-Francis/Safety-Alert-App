@@ -22,13 +22,56 @@ async function getUsersWithServiceType(serviceType: string): Promise<string[]> {
 // Function to notify service users via email server API
 async function notifyServiceUsers(alertData: AlertData): Promise<void> {
   try {
-    console.log(`📧 Skipping email sending from mobile app - website dashboard will handle notifications`);
-    console.log(`🌐 Alert will be saved to Firebase and website will detect it and send emails`);
+    console.log(`📧 Mobile app sending service provider emails for ${alertData.serviceType} service`);
     
-    // Mobile app no longer sends emails - website dashboard handles this
-    return;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000) as any; // 15 second timeout
+    
+    console.log(`🌐 Mobile app sending service notifications via: ${getServerUrl()}`);
+    console.log(`📧 Service type: ${alertData.serviceType}`);
+    
+    const response = await fetch(`${getServerUrl()}/api/send-alert-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        serviceType: alertData.serviceType,
+        alertData: {
+          serviceType: alertData.serviceType,
+          userName: alertData.userName,
+          location: typeof alertData.location === 'string' ? alertData.location : alertData.location?.address || 'Location provided',
+          time: alertData.time,
+          message: alertData.message || '',
+          alertId: `mobile-${Date.now()}`
+        }
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`✅ Service provider emails sent for ${alertData.serviceType}`);
+      console.log(`📧 Email result:`, result);
+    } else {
+      const errorText = await response.text();
+      console.error(`❌ Failed to send service provider emails: ${response.status}`);
+      console.error(`❌ Error response:`, errorText);
+    }
   } catch (error) {
     console.error('❌ Error in notifyServiceUsers:', error);
+    if (error instanceof Error) {
+      console.error('❌ Error details:', error.message);
+      if (error.name === 'AbortError') {
+        console.error('❌ Request timed out - email server may be slow or unreachable');
+      } else if (error.message.includes('Network request failed')) {
+        console.error('❌ Network error - check if email server is running on port 3002');
+        console.error(`❌ Trying to connect to: ${getServerUrl()}`);
+      }
+    }
+    console.log('💡 Email server may not be running. Alert still saved to Firebase.');
   }
 }
 

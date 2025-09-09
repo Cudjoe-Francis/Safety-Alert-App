@@ -3,6 +3,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getDatabase, off, onValue, ref, push } from "firebase/database";
@@ -40,7 +41,9 @@ interface Service {
 }
 
 const Home: React.FC = () => {
+  // Initialize notification listeners
   useListenForReplies();
+
 
   // ////////////////////////////////
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(

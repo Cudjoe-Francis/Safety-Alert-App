@@ -17,6 +17,9 @@ export default function App() {
     // Initialize enhanced notification system
     const initializeNotifications = async () => {
       try {
+        console.log('🔔 Initializing notification system...');
+        
+        // First request permissions
         const granted = await requestNotificationPermissions();
         if (granted) {
           console.log('✅ Enhanced notification system initialized');

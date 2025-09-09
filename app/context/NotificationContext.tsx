@@ -7,8 +7,12 @@ export type AppNotification = {
   message: string;
   timestamp: Date | string | number | undefined;
   read?: boolean;
+  isRead?: boolean;
   replyDetails?: any;
-  type?: "alert-reply" | "incident-reply";
+  type?: "alert-reply" | "incident-reply" | "emergency-reply";
+  serviceType?: string;
+  responderName?: string;
+  station?: string;
 };
 
 interface NotificationContextType {

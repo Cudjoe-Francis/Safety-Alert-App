@@ -35,14 +35,17 @@ import uuid from "react-native-uuid";
 import { useListenForReplies } from "../../utils/listenForReplies";
 import { useNotification } from "../context/NotificationContext";
 
-type NotificationItem = {
+export type NotificationItem = {
   id: string;
   title?: string;
   message: string;
   timestamp: string;
   replyDetails?: any;
-  type?: "alert-reply" | "incident-reply";
+  type?: "alert-reply" | "incident-reply" | "emergency-reply";
   read?: boolean;
+  serviceType?: string;
+  responderName?: string;
+  station?: string;
 };
 
 const NotificationScreen = () => {
@@ -82,20 +85,28 @@ const NotificationScreen = () => {
   useEffect(() => {
     animateIn();
 
-    // Listener for received push notifications
+    // Listener for received push notifications - only for replies
     const subscriptionReceived = Notifications.addNotificationReceivedListener(
       (notification) => {
-        const newNotification: NotificationItem = {
-          id: notification.request.identifier + "-" + uuid.v4(), // Ensures uniqueness
-          title: notification.request.content.title || "Security Alert",
-          message:
-            notification.request.content.body || "Message from responder.",
-          timestamp: new Date().toLocaleString(),
-          replyDetails: notification.request.content.data?.reply, // <-- Add this if available
-          read: false,
-        };
+        const data = notification.request.content.data;
+        
+        // Only process notifications that are replies (emergency-reply or incident-reply)
+        if (data?.type === 'emergency-reply' || data?.type === 'incident-reply') {
+          const newNotification: NotificationItem = {
+            id: notification.request.identifier + "-" + uuid.v4(),
+            title: notification.request.content.title || "Security Alert",
+            message: notification.request.content.body || "Message from responder.",
+            timestamp: new Date().toLocaleString(),
+            replyDetails: data?.reply,
+            type: data?.type,
+            serviceType: data?.serviceType as string,
+            responderName: data?.responderName as string,
+            station: data?.station as string,
+            read: false,
+          };
 
-        setNotifications((prev) => [newNotification, ...prev]);
+          setNotifications((prev) => [newNotification, ...prev]);
+        }
       }
     );
 

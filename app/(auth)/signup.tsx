@@ -348,10 +348,10 @@
 import { StatusBar } from "expo-status-bar";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import { ref as dbRef, set as dbSet, getDatabase } from "firebase/database";
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { doc, getFirestore, setDoc, serverTimestamp } from "firebase/firestore";
 import React, { useState } from "react";
-// import { replace } from "expo-router/build/global-state/routing";
 import { useRouter } from "expo-router";
+import { validateEmailRegistration } from "../../services/userValidationService";
 
 import {
   Keyboard,
@@ -370,10 +370,19 @@ import { Ionicons } from "@expo/vector-icons";
 const SignUp = () => {
   // State variables for form fields
   const [firstName, setFirstName] = useState<string>("");
+  const [middleName, setMiddleName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [homeAddress, setHomeAddress] = useState<string>("");
+  const [occupation, setOccupation] = useState<string>("");
+  const [gender, setGender] = useState<string>("");
+  const [dateOfBirth, setDateOfBirth] = useState<string>("");
+  const [bloodType, setBloodType] = useState<string>("");
+  const [medicalCondition, setMedicalCondition] = useState<string>("");
+  const [allergies, setAllergies] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -384,6 +393,7 @@ const SignUp = () => {
   const [emailError, setEmailError] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>("");
+  const [phoneNumberError, setPhoneNumberError] = useState<string>("");
 
   const router = useRouter();
 
@@ -469,6 +479,21 @@ const SignUp = () => {
       isConfirmPasswordValid
     ) {
       try {
+        // Validate email registration before creating account
+        const validation = await validateEmailRegistration(
+          email,
+          'mobile',
+          'mobile_app'
+        );
+        
+        if (!validation.isValid) {
+          console.log('❌ Validation failed:', validation.message);
+          setAuthError(validation.message);
+          return;
+        }
+        
+        console.log('✅ Validation passed:', validation.message);
+
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email,
@@ -479,21 +504,44 @@ const SignUp = () => {
         await setDoc(doc(firestore, "users", user.uid), {
           uid: user.uid,
           firstName,
+          middleName,
           lastName,
-          email,
-          createdAt: new Date().toISOString(),
+          email: email.toLowerCase().trim(),
+          phoneNumber,
+          homeAddress,
+          occupation,
+          gender,
+          dateOfBirth,
+          bloodType,
+          medicalCondition,
+          allergies,
+          userType: 'mobile',
+          platform: 'mobile_app',
+          serviceType: 'mobile', // Mobile users have serviceType 'mobile'
+          createdAt: serverTimestamp(),
         });
 
         // **Save to Realtime Database (add this block)**
         const db = getDatabase();
         await dbSet(dbRef(db, `users/${user.uid}`), {
           firstName,
+          middleName,
           lastName,
-          email,
+          email: email.toLowerCase().trim(),
+          phoneNumber,
+          homeAddress,
+          occupation,
+          gender,
+          dateOfBirth,
+          bloodType,
+          medicalCondition,
+          allergies,
+          userType: 'mobile',
+          platform: 'mobile_app',
         });
 
         router.replace("/(tabs)");
-        console.log("User signed up successfully:", user);
+        console.log("Mobile user signed up successfully:", user);
       } catch (error: any) {
         if (error.code === "auth/email-already-in-use") {
           alert("Email has already been used. Please sign in.");
@@ -557,6 +605,86 @@ const SignUp = () => {
             {lastNameError ? (
               <Text style={styles.errorText}>{lastNameError}</Text>
             ) : null}
+
+            <Text style={styles.text}>Middle Name (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={middleName}
+              onChangeText={setMiddleName}
+            />
+
+            <Text style={styles.text}>Phone Number</Text>
+            <TextInput
+              style={[styles.input, phoneNumberError ? styles.inputError : null]}
+              keyboardType="phone-pad"
+              value={phoneNumber}
+              onChangeText={(text) => {
+                setPhoneNumber(text);
+                if (phoneNumberError)
+                  validateTextInput(text, "Phone Number", setPhoneNumberError);
+              }}
+              onBlur={() =>
+                validateTextInput(phoneNumber, "Phone Number", setPhoneNumberError)
+              }
+            />
+            {phoneNumberError ? (
+              <Text style={styles.errorText}>{phoneNumberError}</Text>
+            ) : null}
+
+            <Text style={styles.text}>Home Address</Text>
+            <TextInput
+              style={styles.input}
+              value={homeAddress}
+              onChangeText={setHomeAddress}
+              multiline
+            />
+
+            <Text style={styles.text}>Occupation</Text>
+            <TextInput
+              style={styles.input}
+              value={occupation}
+              onChangeText={setOccupation}
+            />
+
+            <Text style={styles.text}>Gender</Text>
+            <TextInput
+              style={styles.input}
+              value={gender}
+              onChangeText={setGender}
+              placeholder="Male/Female/Other"
+            />
+
+            <Text style={styles.text}>Date of Birth</Text>
+            <TextInput
+              style={styles.input}
+              value={dateOfBirth}
+              onChangeText={setDateOfBirth}
+              placeholder="YYYY-MM-DD"
+            />
+
+            <Text style={styles.text}>Blood Type (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={bloodType}
+              onChangeText={setBloodType}
+              placeholder="A+, B-, O+, etc."
+            />
+
+            <Text style={styles.text}>Medical Condition (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={medicalCondition}
+              onChangeText={setMedicalCondition}
+              multiline
+            />
+
+            <Text style={styles.text}>Allergies (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={allergies}
+              onChangeText={setAllergies}
+              multiline
+            />
 
             <Text style={styles.text}>Email</Text>
             <TextInput

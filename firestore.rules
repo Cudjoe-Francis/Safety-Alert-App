@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow reading user data for service type matching in alerts
+      allow read: if request.auth != null;
+    }
+    
+    // Allow server-side access to users collection for email notifications
+    match /users/{document=**} {
+      allow read: if true; // Allow server-side read access for email notifications
+    }
+    
+    // Alerts collection - authenticated users can read and write alerts
+    match /alerts/{alertId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.uid in resource.data.assignedTo);
+    }
+    
+    // Replies subcollection within alerts
+    match /alerts/{alertId}/replies/{replyId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // Service providers collection - authenticated users can read
+    match /serviceProviders/{providerId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Notifications collection - users can read/write their own notifications
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // Emergency contacts collection
+    match /emergencyContacts/{contactId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Service type specific collections
+    match /police/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /hospital/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /fireService/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /campus/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // General fallback rule for authenticated users
+    // This ensures all authenticated users can access necessary data
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

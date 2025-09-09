@@ -3,18 +3,36 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { getAuth, signOut } from "firebase/auth";
-import React, { useState } from "react";
-import { Modal, Platform, Text, TouchableOpacity, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Modal, Platform, Text, TouchableOpacity, View, Alert } from "react-native";
 
 import { useTheme } from "..//..//themeContext";
-import { NotificationProvider } from "../context/NotificationContext";
+import { useAuthGuard } from "../../hooks/useAuthGuard";
 
 const TabsLayout = () => {
   const { isDarkMode } = useTheme();
-
   const router = useRouter();
-
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  
+  // Add auth guard to automatically handle session expiry
+  const { isAuthenticated, loading } = useAuthGuard({
+    redirectTo: '/(auth)/signin',
+    showAlert: true
+  });
+
+  // Show loading screen while checking auth
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 18, color: '#ff5330' }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // If not authenticated, the useAuthGuard hook will handle redirect
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {
@@ -28,10 +46,9 @@ const TabsLayout = () => {
   };
 
   return (
-    <NotificationProvider>
-      <>
-        <StatusBar style="dark" />
-        <Tabs
+    <>
+      <StatusBar style="dark" />
+      <Tabs
           screenOptions={{
             tabBarActiveTintColor: "#ff5330",
             tabBarInactiveTintColor: isDarkMode ? "#fff" : "#000",
@@ -188,8 +205,7 @@ const TabsLayout = () => {
             }}
           />
         </Tabs>
-      </>
-    </NotificationProvider>
+    </>
   );
 };
 

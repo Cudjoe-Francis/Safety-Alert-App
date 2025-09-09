@@ -132,24 +132,7 @@ export function createEmergencyAlertNotification(
     vibrate: [0, 250, 250, 250, 250, 250],
     channelId: 'emergency-replies',
     badge: 1,
-    actions: [
-      {
-        identifier: 'VIEW_REPLY',
-        title: '👁️ View Reply',
-        options: {
-          opensAppToForeground: true,
-          isAuthenticationRequired: false,
-        },
-      },
-      {
-        identifier: 'MARK_READ',
-        title: '✅ Mark as Read',
-        options: {
-          opensAppToForeground: false,
-          isAuthenticationRequired: false,
-        },
-      },
-    ],
+    // Remove categoryIdentifier to fix the nil error
     data: {
       type: 'emergency-reply',
       serviceType,
@@ -179,15 +162,7 @@ export function createIncidentReplyNotification(
     vibrate: [0, 100, 50, 100],
     channelId: 'incident-replies',
     badge: 1,
-    actions: [
-      {
-        identifier: 'VIEW_REPLY',
-        title: '👁️ View Reply',
-        options: {
-          opensAppToForeground: true,
-        },
-      },
-    ],
+    // Remove categoryIdentifier to fix the nil error
     data: {
       type: 'incident-reply',
       responderName,
@@ -202,20 +177,31 @@ export async function sendEnhancedNotification(
   content: EnhancedNotificationContent
 ): Promise<string> {
   try {
+    const notificationContent: any = {
+      title: content.title,
+      body: content.body,
+      data: content.data || {},
+      sound: content.sound || 'default',
+      badge: content.badge,
+      priority: content.priority || Notifications.AndroidNotificationPriority.HIGH,
+    };
+
+    // Only add categoryIdentifier if it's defined and not null
+    if (content.categoryIdentifier) {
+      notificationContent.categoryIdentifier = content.categoryIdentifier;
+    }
+
+    // Add Android-specific properties
+    if (Platform.OS === 'android') {
+      notificationContent.channelId = content.channelId || 'emergency-replies';
+      notificationContent.color = content.color;
+      notificationContent.sticky = content.sticky;
+      notificationContent.autoDismiss = content.autoDismiss;
+      notificationContent.vibrate = content.vibrate;
+    }
+
     const notificationId = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: content.title,
-        body: content.body,
-        data: content.data || {},
-        sound: content.sound || 'default',
-        badge: content.badge,
-        categoryIdentifier: content.categoryIdentifier,
-        color: content.color,
-        sticky: content.sticky,
-        autoDismiss: content.autoDismiss,
-        priority: content.priority || Notifications.AndroidNotificationPriority.HIGH,
-        vibrate: content.vibrate,
-      },
+      content: notificationContent,
       trigger: null, // Send immediately
       identifier: `notification-${Date.now()}`,
     });

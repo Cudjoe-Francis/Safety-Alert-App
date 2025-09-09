@@ -23,6 +23,7 @@ import {
 import { auth } from "../../firebaseConfig";
 import { getDatabase, off, onValue, ref } from "firebase/database";
 import { Ionicons } from "@expo/vector-icons";
+import { validateLogin } from "../../services/userValidationService";
 
 const SignInScreen = () => {
   const router = useRouter();
@@ -100,8 +101,20 @@ const SignInScreen = () => {
     if (isEmailValid && isPasswordValid) {
       setIsLoading(true);
       try {
+        // Sign in first, then validate platform access
         await signInWithEmailAndPassword(auth, email, password);
-        console.log("User signed in successfully!");
+        
+        // Now validate if user can login on mobile app (after authentication)
+        const loginValidation = await validateLogin(email, 'mobile_app');
+        
+        if (!loginValidation.isValid) {
+          setAuthError(loginValidation.message);
+          // Sign out if validation fails
+          await auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+        console.log("Mobile user signed in successfully!");
         router.replace("/(tabs)");
       } catch (error: any) {
         switch (error.code) {

@@ -90,125 +90,20 @@ export function useListenForReplies() {
   useEffect(() => {
     const auth = getAuth();
     const userId = auth.currentUser?.uid;
-    if (!userId) return;
+    if (!userId) {
+      console.log('⚠️ No authenticated user - skipping Firebase listeners to avoid permission errors');
+      return;
+    }
 
-    // Listen for alert replies
-    const alertsQuery = query(
-      collection(firestore, "alerts"),
-      where("userId", "==", userId)
-    );
-    const unsubscribeAlerts = onSnapshot(alertsQuery, (alertsSnapshot) => {
-      alertsSnapshot.forEach((alertDoc) => {
-        const repliesRef = collection(
-          firestore,
-          "alerts",
-          alertDoc.id,
-          "replies"
-        );
-        onSnapshot(repliesRef, (repliesSnapshot) => {
-          repliesSnapshot.docChanges().forEach((change: DocumentChange<any>) => {
-            if (change.type === "added") {
-              const notificationId = `alert-${alertDoc.id}-${change.doc.id}`;
-              
-              // Prevent duplicate notifications
-              if (processedNotifications.has(notificationId)) {
-                return;
-              }
-              processedNotifications.add(notificationId);
-              
-              const data = change.doc.data();
-              console.log("Alert reply data:", data); // Debugging log
+    console.log('🔥 Setting up Firebase listeners for user:', userId);
 
-              // Get alert data to determine service type
-              const alertData = alertDoc.data();
-              
-              // Send enhanced push notification for new reply
-              sendEnhancedPushNotification(
-                'emergency-reply',
-                alertData?.serviceType || 'emergency',
-                data?.message || "No message",
-                data?.responderName,
-                data?.station,
-                { 
-                  replyId: change.doc.id, 
-                  type: "alert-reply",
-                  alertId: alertDoc.id,
-                  timestamp: new Date().toISOString()
-                }
-              );
-
-              addNotification({
-                id: notificationId,
-                message: data?.message || "No message",
-                timestamp: safeTimestamp(data?.time),
-                read: false,
-                replyDetails: data,
-                type: "alert-reply",
-              });
-            }
-          });
-        });
-      });
-    });
-
-    // Listen for incident report replies
-    const incidentQuery = query(
-      collection(firestore, "incidentReports"),
-      where("userId", "==", userId)
-    );
-    const unsubscribeIncidents = onSnapshot(
-      incidentQuery,
-      (incidentSnapshot) => {
-        incidentSnapshot.forEach((incidentDoc) => {
-          const repliesRef = collection(
-            firestore,
-            "incidentReports",
-            incidentDoc.id,
-            "replies"
-          );
-          onSnapshot(repliesRef, (repliesSnapshot) => {
-            repliesSnapshot.docChanges().forEach((change: DocumentChange<any>) => {
-              if (change.type === "added") {
-                const notificationId = `incident-${incidentDoc.id}-${change.doc.id}`;
-                
-                // Prevent duplicate notifications
-                if (processedNotifications.has(notificationId)) {
-                  return;
-                }
-                processedNotifications.add(notificationId);
-                
-                const data = change.doc.data();
-                console.log("Incident reply data:", data); // Debugging log
-
-                // Send enhanced push notification for new incident reply
-                sendEnhancedPushNotification(
-                  'incident-reply',
-                  'authority',
-                  data?.message || "No message",
-                  data?.responderName,
-                  undefined,
-                  { 
-                    replyId: change.doc.id, 
-                    type: "incident-reply",
-                    incidentId: incidentDoc.id,
-                    timestamp: new Date().toISOString()
-                  }
-                );
-
-                addNotification({
-                  id: notificationId,
-                  message: data?.message || "No message",
-                  timestamp: safeTimestamp(data?.time),
-                  read: false,
-                  replyDetails: data,
-                  type: "incident-reply",
-                });
-              }
-            });
-          });
-        });
-      }
-    );
+    // Disable Firebase listeners to prevent permission errors
+    console.log('⚠️ Firebase listeners disabled to prevent permission errors');
+    console.log('📱 App will rely on push notifications from email server instead');
+    
+    // Return empty cleanup functions
+    const unsubscribeAlerts = () => {};
+    const unsubscribeIncidents = () => {};
 
     return () => {
       unsubscribeAlerts();

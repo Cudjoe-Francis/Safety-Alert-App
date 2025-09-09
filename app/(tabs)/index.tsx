@@ -22,7 +22,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { buildAlertData, EmergencyContact } from "../../utils/buildAlertData";
+import { buildAlertData, EmergencyContact, UserDetails } from "../../utils/buildAlertData";
 import { useListenForReplies } from "../../utils/listenForReplies";
 import { sendAlertToFirestore } from "../../utils/sendAlert";
 import { useTheme } from "..//../themeContext";
@@ -62,7 +62,7 @@ const Home: React.FC = () => {
   } | null>(null);
   const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+  const countdownInterval = useRef<any>(null);
 
   // Animation for Find Help popup
   const popupAnim = useRef(new Animated.Value(0)).current;
@@ -390,7 +390,7 @@ const Home: React.FC = () => {
       // 2. Get user data from Firestore
       const userId = getAuth().currentUser?.uid;
       const firestore = getFirestore();
-      const userDoc = await getDoc(doc(firestore, "users", userId));
+      const userDoc = await getDoc(doc(firestore, "users", userId!));
       const userDataRaw = userDoc.data();
 
       if (!userDataRaw) {
@@ -423,7 +423,7 @@ const Home: React.FC = () => {
         emergencyContacts,
         location,
         serviceType,
-        userId
+        userId!
       );
 
       console.log("Sending alert:", alert);
@@ -444,6 +444,21 @@ const Home: React.FC = () => {
       }
 
       console.log("Alert sent to Firestore!");
+
+      // Send push notification to other users
+      try {
+        const { sendEnhancedNotification, createEmergencyAlertNotification } = await import('../../utils/notificationConfig');
+        const notificationContent = createEmergencyAlertNotification(
+          serviceType,
+          `New ${serviceType} alert from ${alert.userName}`,
+          alert.userName,
+          alert.location?.address || 'Unknown location'
+        );
+        await sendEnhancedNotification(notificationContent);
+        console.log('🔔 Push notification sent to other users');
+      } catch (notifError) {
+        console.error('❌ Failed to send push notification:', notifError);
+      }
 
       addNotification({
         id: Date.now().toString(),
